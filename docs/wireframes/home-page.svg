@@ -1,0 +1,114 @@
+<svg width="1200" height="1400" viewBox="0 0 1200 1400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="1400" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="80" fill="#ffffff" stroke="#f0f0f0" stroke-width="1"/>
+  
+  <!-- Logo -->
+  <text x="60" y="45" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#000">MAG+</text>
+  
+  <!-- Navigation -->
+  <text x="400" y="45" font-family="Arial, sans-serif" font-size="16" fill="#666">FASHION</text>
+  <text x="500" y="45" font-family="Arial, sans-serif" font-size="16" fill="#666">LIFESTYLE</text>
+  <text x="600" y="45" font-family="Arial, sans-serif" font-size="16" fill="#666">CULTURE</text>
+  <text x="700" y="45" font-family="Arial, sans-serif" font-size="16" fill="#666">EDITORIAL</text>
+  <text x="800" y="45" font-family="Arial, sans-serif" font-size="16" fill="#666">A TO Z</text>
+  
+  <!-- Right side icons -->
+  <circle cx="1000" cy="40" r="12" fill="none" stroke="#666" stroke-width="1"/>
+  <circle cx="1030" cy="40" r="12" fill="none" stroke="#666" stroke-width="1"/>
+  <circle cx="1060" cy="40" r="12" fill="none" stroke="#666" stroke-width="1"/>
+  <circle cx="1090" cy="40" r="12" fill="none" stroke="#666" stroke-width="1"/>
+  
+  <!-- Search -->
+  <rect x="1120" y="30" width="60" height="20" fill="none" stroke="#666" stroke-width="1" rx="10"/>
+  <text x="1125" y="42" font-family="Arial, sans-serif" font-size="12" fill="#999">Search</text>
+  
+  <!-- Main Content Area -->
+  <rect x="60" y="120" width="1080" height="600" fill="#ffffff"/>
+  
+  <!-- Section Headers -->
+  <text x="60" y="150" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#000">인기 기사</text>
+  <text x="580" y="150" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#000">에디터픽</text>
+  <text x="900" y="150" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#000">급상승</text>
+  
+  <!-- Feature Article (Left) -->
+  <rect x="60" y="170" width="480" height="300" fill="#f8f8f8" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="80" y="190" width="440" height="200" fill="#e8e8e8"/>
+  <text x="80" y="420" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000">주식회사 아이즈 2025 채용</text>
+  <text x="80" y="445" font-family="Arial, sans-serif" font-size="14" fill="#666">매거진팀 에디터 / 디자인팀 영상 디자이너</text>
+  
+  <!-- Editor's Pick (Center) -->
+  <rect x="580" y="170" width="280" height="300" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="600" y="190" width="240" height="150" fill="#e8e8e8"/>
+  <text x="600" y="365" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#000">로꼬가 담은 파리의 순간들</text>
+  <text x="600" y="385" font-family="Arial, sans-serif" font-size="12" fill="#666">파리패션위크 속 로꼬의 사진들 따라</text>
+  <text x="600" y="420" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 18470 · 7일 전</text>
+  
+  <!-- Trending (Right) -->
+  <rect x="900" y="170" width="240" height="300" fill="#ffffff"/>
+  
+  <!-- Trending List -->
+  <text x="920" y="200" font-family="Arial, sans-serif" font-size="12" fill="#999">1100 기준</text>
+  
+  <text x="920" y="230" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">1</text>
+  <text x="940" y="230" font-family="Arial, sans-serif" font-size="14" fill="#000">주식회사 아이즈 2025 채용</text>
+  
+  <text x="920" y="260" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">2</text>
+  <text x="940" y="260" font-family="Arial, sans-serif" font-size="14" fill="#000">[A to Z] F1</text>
+  
+  <text x="920" y="290" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">3</text>
+  <text x="940" y="290" font-family="Arial, sans-serif" font-size="14" fill="#000">2025년 인기 여행지 최고의 장소</text>
+  
+  <text x="920" y="320" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">4</text>
+  <text x="940" y="320" font-family="Arial, sans-serif" font-size="14" fill="#000">하루라도 참기 힘든다면? 섹스 중독</text>
+  
+  <text x="920" y="350" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">5</text>
+  
+  <!-- Latest Articles Section -->
+  <text x="60" y="780" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#000">최신 기사</text>
+  
+  <!-- Article Grid (3x2) -->
+  <!-- Row 1 -->
+  <rect x="60" y="800" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="80" y="820" width="300" height="140" fill="#e8e8e8"/>
+  <text x="80" y="980" font-family="Arial, sans-serif" font-size="14" fill="#666">라이프 > 뉴스</text>
+  <text x="80" y="1000" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">왓챠, 재무 상태 악화로 기업회생 기로에</text>
+  <text x="80" y="1020" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 4625 · 2일 전</text>
+  
+  <rect x="430" y="800" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="450" y="820" width="300" height="140" fill="#e8e8e8"/>
+  <text x="450" y="980" font-family="Arial, sans-serif" font-size="14" fill="#666">라이프 > 뉴스</text>
+  <text x="450" y="1000" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">김수자 작가가 프랑스 문화예술공로훈장</text>
+  <text x="450" y="1020" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 4613 · 2일 전</text>
+  
+  <rect x="800" y="800" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="820" y="820" width="300" height="140" fill="#e8e8e8"/>
+  <text x="820" y="980" font-family="Arial, sans-serif" font-size="14" fill="#666">패션 > 뉴스</text>
+  <text x="820" y="1000" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">스타일리스트 로타 볼코바의 옷.옷.옷</text>
+  <text x="820" y="1020" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 4814 · 2일 전</text>
+  
+  <!-- Row 2 -->
+  <rect x="60" y="1080" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="80" y="1100" width="300" height="140" fill="#e8e8e8"/>
+  <text x="80" y="1260" font-family="Arial, sans-serif" font-size="14" fill="#666">라이프 > 뉴스</text>
+  <text x="80" y="1280" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">무더위 피해 전시장으로, 7월의 추천 전시</text>
+  <text x="80" y="1300" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 5020 · 2일 전</text>
+  
+  <rect x="430" y="1080" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="450" y="1100" width="300" height="140" fill="#e8e8e8"/>
+  <text x="450" y="1260" font-family="Arial, sans-serif" font-size="14" fill="#666">라이프 > 이코노미</text>
+  <text x="450" y="1280" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">2026년 최저임금 시간당 10,320원 결정</text>
+  <text x="450" y="1300" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 4860 · 2일 전</text>
+  
+  <rect x="800" y="1080" width="340" height="240" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="820" y="1100" width="300" height="140" fill="#e8e8e8"/>
+  <text x="820" y="1260" font-family="Arial, sans-serif" font-size="14" fill="#666">패션 > 뉴스</text>
+  <text x="820" y="1280" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">승혜교와 함께한, 펜디 '스파이 백' 캠페인</text>
+  <text x="820" y="1300" font-family="Arial, sans-serif" font-size="12" fill="#999">읽음 4954 · 2일 전</text>
+  
+  <!-- Load More Button -->
+  <rect x="500" y="1350" width="200" height="40" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="590" y="1375" font-family="Arial, sans-serif" font-size="14" fill="#000">더보기</text>
+</svg> 
