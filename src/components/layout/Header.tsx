@@ -55,12 +55,6 @@ export default function Header() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsMobileMenuOpen(false);
-      }
-      if (
         categoryMenuRef.current &&
         !categoryMenuRef.current.contains(event.target as Node)
       ) {
@@ -72,167 +66,109 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 모바일 메뉴 열릴 때 스크롤 방지
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
+
   return (
-    <header
-      className="bg-white border-b border-gray-100 sticky top-0 z-50"
-      role="banner"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* 로고 */}
-          <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm"
-              aria-label="MAG+ 홈페이지로 이동"
-            >
-              <div className="w-8 h-8 bg-black flex items-center justify-center">
-                <span
-                  className="text-white font-bold text-sm"
-                  aria-hidden="true"
-                >
-                  M
-                </span>
-              </div>
-              <span className="text-2xl font-light text-black tracking-wide hidden sm:block">
-                MAG+
-              </span>
-            </Link>
-          </div>
-
-          {/* 데스크톱 네비게이션 */}
-          <nav
-            className="hidden md:flex space-x-10"
-            role="navigation"
-            aria-label="메인 네비게이션"
-          >
-            <Link
-              href="/"
-              className="text-gray-900 hover:text-gray-600 text-sm font-light tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm px-2 py-1"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/articles"
-              className="text-gray-900 hover:text-gray-600 text-sm font-light tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm px-2 py-1"
-            >
-              ARTICLES
-            </Link>
-            <div className="relative" ref={categoryMenuRef}>
-              <button
-                className="text-gray-900 hover:text-gray-600 text-sm font-light tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm px-2 py-1"
-                onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
-                onKeyDown={(e) =>
-                  handleKeyDown(e, () =>
-                    setIsCategoryMenuOpen(!isCategoryMenuOpen)
-                  )
-                }
-                aria-expanded={isCategoryMenuOpen}
-                aria-haspopup="true"
-                aria-controls="desktop-category-menu"
+    <>
+      <header
+        className="bg-white border-b border-gray-100 sticky top-0 z-50"
+        role="banner"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* 로고 */}
+            <div className="flex-shrink-0">
+              <Link
+                href="/"
+                className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm"
+                aria-label="MAG+ 홈페이지로 이동"
               >
-                CATEGORIES
-              </button>
-              <div
-                id="desktop-category-menu"
-                className={`absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 shadow-lg transition-all duration-200 z-10 ${
-                  isCategoryMenuOpen
-                    ? "opacity-100 visible"
-                    : "opacity-0 invisible"
-                }`}
-                role="menu"
-                aria-labelledby="categories-button"
-              >
-                <div className="py-2">
-                  {CATEGORIES.map((category, index) => (
-                    <Link
-                      key={category.id}
-                      href={`/categories/${category.slug}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors font-light focus:outline-none focus:bg-gray-50 focus:text-black"
-                      role="menuitem"
-                      tabIndex={isCategoryMenuOpen ? 0 : -1}
-                      onClick={() => setIsCategoryMenuOpen(false)}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </nav>
-
-          {/* 검색바 */}
-          <div className="flex-1 max-w-md mx-8 hidden sm:block">
-            <form
-              onSubmit={handleSearch}
-              role="search"
-              aria-label="아티클 검색"
-            >
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon
-                    className="h-4 w-4 text-gray-400"
+                <div className="w-8 h-8 bg-black flex items-center justify-center">
+                  <span
+                    className="text-white font-bold text-sm"
                     aria-hidden="true"
-                  />
+                  >
+                    M
+                  </span>
                 </div>
-                <input
-                  type="search"
-                  placeholder="검색어를 입력하세요..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border-0 border-b border-gray-200 bg-transparent leading-5 placeholder-gray-400 focus:outline-none focus:border-black text-sm font-light focus:ring-0"
-                  aria-label="검색어 입력"
-                />
+                <span className="text-2xl font-light text-black tracking-wide hidden sm:block">
+                  MAG+
+                </span>
+              </Link>
+            </div>
+
+            {/* 데스크톱 네비게이션 */}
+            <nav
+              className="hidden md:flex space-x-10"
+              role="navigation"
+              aria-label="메인 네비게이션"
+            >
+              <Link
+                href="/articles"
+                className="text-gray-900 hover:text-gray-600 text-sm font-light tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm px-2 py-1"
+              >
+                ARTICLES
+              </Link>
+              <div className="relative" ref={categoryMenuRef}>
+                <button
+                  className="text-gray-900 hover:text-gray-600 text-sm font-light tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm px-2 py-1"
+                  onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
+                  onKeyDown={(e) =>
+                    handleKeyDown(e, () =>
+                      setIsCategoryMenuOpen(!isCategoryMenuOpen)
+                    )
+                  }
+                  aria-expanded={isCategoryMenuOpen}
+                  aria-haspopup="true"
+                  aria-controls="desktop-category-menu"
+                >
+                  CATEGORIES
+                </button>
+                <div
+                  id="desktop-category-menu"
+                  className={`absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 shadow-lg transition-all duration-200 z-10 ${
+                    isCategoryMenuOpen
+                      ? "opacity-100 visible"
+                      : "opacity-0 invisible"
+                  }`}
+                  role="menu"
+                  aria-labelledby="categories-button"
+                >
+                  <div className="py-2">
+                    {CATEGORIES.map((category, index) => (
+                      <Link
+                        key={category.id}
+                        href={`/categories/${category.slug}`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors font-light focus:outline-none focus:bg-gray-50 focus:text-black"
+                        role="menuitem"
+                        tabIndex={isCategoryMenuOpen ? 0 : -1}
+                        onClick={() => setIsCategoryMenuOpen(false)}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </form>
-          </div>
+            </nav>
 
-          {/* 구독 버튼 */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={handleSubscribe}
-              className="hidden sm:inline-flex items-center px-6 py-2 border border-black text-sm font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-              aria-label="뉴스레터 구독하기"
-            >
-              SUBSCRIBE
-            </button>
-
-            {/* 모바일 메뉴 버튼 */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 text-gray-400 hover:text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px]"
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-menu"
-              aria-label={isMobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
-            >
-              {isMobileMenuOpen ? (
-                <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* 모바일 메뉴 */}
-        <div
-          id="mobile-menu"
-          ref={mobileMenuRef}
-          className={`md:hidden transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "max-h-screen opacity-100"
-              : "max-h-0 opacity-0 overflow-hidden"
-          }`}
-          role="navigation"
-          aria-label="모바일 네비게이션"
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-100">
-            {/* 모바일 검색 */}
-            <div className="px-3 py-2">
+            {/* 검색바 */}
+            <div className="flex-1 max-w-md mx-8 hidden sm:block">
               <form
                 onSubmit={handleSearch}
                 role="search"
-                aria-label="모바일 아티클 검색"
+                aria-label="아티클 검색"
               >
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -247,61 +183,172 @@ export default function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="block w-full pl-10 pr-3 py-2 border-0 border-b border-gray-200 bg-transparent leading-5 placeholder-gray-400 focus:outline-none focus:border-black text-sm font-light focus:ring-0"
-                    aria-label="모바일 검색어 입력"
+                    aria-label="검색어 입력"
                   />
                 </div>
               </form>
             </div>
 
-            {/* 모바일 네비게이션 */}
-            <Link
-              href="/"
-              className="text-gray-900 hover:text-gray-600 block px-3 py-2 text-base font-light tracking-wide focus:outline-none focus:bg-gray-50 focus:text-black transition-colors rounded-sm min-h-[44px] flex items-center"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              HOME
-            </Link>
-            <Link
-              href="/articles"
-              className="text-gray-900 hover:text-gray-600 block px-3 py-2 text-base font-light tracking-wide focus:outline-none focus:bg-gray-50 focus:text-black transition-colors rounded-sm min-h-[44px] flex items-center"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              ARTICLES
-            </Link>
-
-            {/* 모바일 카테고리 */}
-            <div className="px-3 py-2">
-              <div className="text-gray-500 text-sm font-light tracking-wide mb-2">
-                CATEGORIES
-              </div>
-              {CATEGORIES.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/categories/${category.slug}`}
-                  className="text-gray-600 hover:text-black block px-3 py-1 text-sm font-light focus:outline-none focus:bg-gray-50 focus:text-black transition-colors rounded-sm min-h-[44px] flex items-center"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </div>
-
-            {/* 모바일 구독 버튼 */}
-            <div className="px-3 py-2">
+            {/* 구독 버튼 */}
+            <div className="flex items-center space-x-4">
               <button
-                onClick={() => {
-                  handleSubscribe();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full inline-flex items-center justify-center px-6 py-3 border border-black text-sm font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                onClick={handleSubscribe}
+                className="hidden sm:inline-flex items-center px-6 py-2 border border-black text-sm font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
                 aria-label="뉴스레터 구독하기"
               >
                 SUBSCRIBE
               </button>
+
+              {/* 모바일 메뉴 버튼 */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden inline-flex items-center justify-center p-2 text-gray-400 hover:text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px] relative z-[60]"
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-menu"
+                aria-label={isMobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+              >
+                <div className="relative w-6 h-6">
+                  <Bars3Icon
+                    className={`absolute inset-0 h-6 w-6 transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen
+                        ? "opacity-0 rotate-180 scale-75"
+                        : "opacity-100 rotate-0 scale-100"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <XMarkIcon
+                    className={`absolute inset-0 h-6 w-6 transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen
+                        ? "opacity-100 rotate-0 scale-100"
+                        : "opacity-0 rotate-180 scale-75"
+                    }`}
+                    aria-hidden="true"
+                  />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 모바일 메뉴 오버레이 */}
+      <div
+        className={`md:hidden fixed inset-0 z-[55] ${
+          isMobileMenuOpen ? "block" : "hidden"
+        }`}
+      >
+        {/* 배경 오버레이 */}
+        <div
+          className="absolute inset-0 bg-black opacity-50 transition-opacity duration-300 ease-in-out"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+
+        {/* 메뉴 패널 */}
+        <div
+          id="mobile-menu"
+          ref={mobileMenuRef}
+          className="absolute inset-0 bg-white shadow-2xl transform translate-y-0 transition-transform duration-300 ease-in-out"
+          role="navigation"
+          aria-label="모바일 네비게이션"
+        >
+          <div className="h-full overflow-y-auto pt-16">
+            <div className="px-6 py-8 space-y-8">
+              {/* 모바일 검색 */}
+              <div className="pb-6 border-b border-gray-100">
+                <form
+                  onSubmit={(e) => {
+                    handleSearch(e);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  role="search"
+                  aria-label="모바일 아티클 검색"
+                >
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <MagnifyingGlassIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <input
+                      type="search"
+                      placeholder="검색어를 입력하세요..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg bg-gray-50 leading-5 placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white text-base font-light transition-all duration-200"
+                      aria-label="모바일 검색어 입력"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* 메인 네비게이션 */}
+              <div className="space-y-6">
+                <Link
+                  href="/"
+                  className="block text-2xl font-light text-black hover:text-gray-600 transition-colors duration-200 py-3 border-b border-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  HOME
+                </Link>
+                <Link
+                  href="/articles"
+                  className="block text-2xl font-light text-black hover:text-gray-600 transition-colors duration-200 py-3 border-b border-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  ARTICLES
+                </Link>
+              </div>
+
+              {/* 카테고리 섹션 */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-light text-gray-500 tracking-wide uppercase">
+                  Categories
+                </h3>
+                <div className="space-y-2">
+                  {CATEGORIES.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/categories/${category.slug}`}
+                      className="flex items-center space-x-3 py-3 px-2 text-black hover:text-gray-600 transition-colors duration-200 border-b border-gray-100"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">
+                        {category.slug === "cafe" && "☕"}
+                        {category.slug === "restaurant" && "🍽️"}
+                        {category.slug === "popup" && "🏪"}
+                        {category.slug === "culture" && "🎭"}
+                        {category.slug === "shopping" && "🛍️"}
+                        {category.slug === "exhibition" && "🎨"}
+                      </span>
+                      <span className="text-base font-light">
+                        {category.name}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* 구독 버튼 */}
+              <div className="pt-6">
+                <button
+                  onClick={() => {
+                    handleSubscribe();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center px-8 py-4 border-2 border-black text-lg font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-300 rounded-lg"
+                  aria-label="뉴스레터 구독하기"
+                >
+                  SUBSCRIBE
+                </button>
+              </div>
+
+              {/* 추가 여백 */}
+              <div className="h-20"></div>
             </div>
           </div>
         </div>
       </div>
-    </header>
+    </>
   );
 }
