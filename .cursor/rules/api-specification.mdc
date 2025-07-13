@@ -1,0 +1,65 @@
+# MAG+ 웹매거진 API 명세서
+
+## Articles API
+
+| 엔드포인트 URL       | HTTP 메서드 | 요청 파라미터                                      | 요청 예시                                                       | 응답 구조                                           |
+| -------------------- | ----------- | -------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
+| `/api/articles`      | GET         | `page`, `limit`, `category`, `region`              | `GET /api/articles?page=1&limit=10&category=cafe`               | `{ data: [articles], count: number, page: number }` |
+| `/api/articles/{id}` | GET         | `id` (path)                                        | `GET /api/articles/123`                                         | `{ data: article, views: number }`                  |
+| `/api/articles`      | POST        | `title`, `content`, `category`, `region`, `images` | `POST /api/articles` body: `{ title: "제목", content: "내용" }` | `{ data: article, id: string }`                     |
+| `/api/articles/{id}` | PUT         | `id` (path), `title`, `content`, `category`        | `PUT /api/articles/123` body: `{ title: "수정된 제목" }`        | `{ data: article, updated_at: string }`             |
+| `/api/articles/{id}` | DELETE      | `id` (path)                                        | `DELETE /api/articles/123`                                      | `{ success: true, message: string }`                |
+
+## Categories API
+
+| 엔드포인트 URL                    | HTTP 메서드 | 요청 파라미터                  | 요청 예시                                  | 응답 구조                             |
+| --------------------------------- | ----------- | ------------------------------ | ------------------------------------------ | ------------------------------------- |
+| `/api/categories`                 | GET         | -                              | `GET /api/categories`                      | `{ data: [categories] }`              |
+| `/api/categories/{slug}/articles` | GET         | `slug` (path), `page`, `limit` | `GET /api/categories/cafe/articles?page=1` | `{ data: [articles], count: number }` |
+
+## Search API
+
+| 엔드포인트 URL | HTTP 메서드 | 요청 파라미터                              | 요청 예시                                          | 응답 구조                                            |
+| -------------- | ----------- | ------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------- |
+| `/api/search`  | GET         | `q`, `category`, `region`, `page`, `limit` | `GET /api/search?q=카페&category=cafe&region=서울` | `{ data: [articles], count: number, query: string }` |
+
+## Subscriptions API
+
+| 엔드포인트 URL            | HTTP 메서드 | 요청 파라미터         | 요청 예시                                                       | 응답 구조                                    |
+| ------------------------- | ----------- | --------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| `/api/subscriptions`      | POST        | `email`, `categories` | `POST /api/subscriptions` body: `{ email: "user@example.com" }` | `{ success: true, subscription_id: string }` |
+| `/api/subscriptions/{id}` | DELETE      | `id` (path)           | `DELETE /api/subscriptions/123`                                 | `{ success: true, message: string }`         |
+
+## Share API
+
+| 엔드포인트 URL | HTTP 메서드 | 요청 파라미터            | 요청 예시                                                             | 응답 구조                              |
+| -------------- | ----------- | ------------------------ | --------------------------------------------------------------------- | -------------------------------------- |
+| `/api/share`   | POST        | `article_id`, `platform` | `POST /api/share` body: `{ article_id: "123", platform: "facebook" }` | `{ success: true, share_url: string }` |
+
+## 공통 응답 구조
+
+### 성공 응답
+
+```json
+{
+  "data": {},
+  "success": true,
+  "message": "Success"
+}
+```
+
+### 에러 응답
+
+```json
+{
+  "error": "Error message",
+  "success": false,
+  "code": "ERROR_CODE"
+}
+```
+
+description:
+globs:
+alwaysApply: false
+
+---
