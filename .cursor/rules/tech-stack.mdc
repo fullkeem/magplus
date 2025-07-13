@@ -1,0 +1,237 @@
+# 기술 스택 리스트
+
+## 프론트엔드 기술 스택
+
+### 핵심 프레임워크
+
+- **Next.js**: `15.3.5` (Latest Stable)
+  - App Router 사용
+  - React 19 지원
+  - Turbopack 개발 모드 지원
+  - 서버 컴포넌트 및 클라이언트 컴포넌트
+  - 내장 최적화 기능
+
+### 언어 및 타입 시스템
+
+- **TypeScript**: `5.8.2` (Latest Stable)
+  - 엄격한 타입 검사 활성화
+  - ES2025 기능 지원
+  - Iterator Helper Methods 지원
+  - Import Attributes 지원
+
+### UI 라이브러리
+
+- **React**: `19.x` (Latest)
+  - React Compiler 지원
+  - 향상된 Server Components
+  - 개선된 Suspense 및 Streaming
+  - useActionState Hook
+
+### 스타일링
+
+- **Tailwind CSS**: `4.1.x` (Latest)
+  - 고성능 엔진 (Oxide)
+  - CSS-first 설정
+  - 모던 CSS 기능 활용
+  - Text Shadow 유틸리티
+  - Mask 유틸리티
+  - Container Queries 내장
+  - 3D Transform 유틸리티
+
+### 상태 관리
+
+- **Zustand**: `5.0.6`
+  - 가벼운 상태 관리 라이브러리
+  - TypeScript 완벽 지원
+  - Persist 미들웨어 지원
+  - Next.js SSR/SSG 호환
+
+### 애니메이션 (필요시)
+
+- **Framer Motion**: `latest`
+- **GSAP**: `latest`
+
+## 데이터베이스
+
+- **PostgreSQL**: `latest`
+  - 직접 구성하거나 호스팅 서비스 사용
+  - 관계형 데이터베이스
+  - JSON 지원
+  - 풀텍스트 검색
+  - 확장성
+
+## 개발 도구
+
+### 런타임
+
+- **Node.js**: `v22.x`
+  - 향상된 성능
+  - TypeScript 네이티브 지원
+  - 개선된 보안
+
+### 패키지 매니저
+
+- **pnpm**: `latest`
+  - 빠른 설치 속도
+  - 디스크 공간 효율성
+  - 엄격한 의존성 관리
+  - 모노레포 지원
+
+### 배포 플랫폼
+
+- **Vercel**: 권장 플랫폼
+  - Next.js 15 완전 지원
+  - PostgreSQL 통합
+  - 자동 배포
+  - Edge Functions
+
+## 백엔드 필요성 분석
+
+### Next.js API Routes로 충분한 경우
+
+- 단순한 CRUD 작업
+- 파일 업로드 처리
+- 이메일 발송
+- 외부 API 프록시
+- 간단한 비즈니스 로직
+
+### 별도 백엔드가 필요한 경우
+
+- 복잡한 비즈니스 로직
+- 대용량 데이터 처리
+- 실시간 기능 (WebSocket)
+- 마이크로서비스 아키텍처
+- 높은 확장성 요구
+
+## 권장 백엔드 옵션
+
+### 1. Next.js API Routes (권장)
+
+```typescript
+// app/api/articles/route.ts
+export async function GET() {
+  // 데이터베이스 조회
+  return Response.json(articles);
+}
+
+export async function POST(request: Request) {
+  // 데이터 생성
+  return Response.json(newArticle);
+}
+```
+
+### 2. Node.js + Express
+
+```javascript
+// server.js
+const express = require("express");
+const app = express();
+
+app.get("/api/articles", (req, res) => {
+  // 아티클 조회
+});
+
+app.post("/api/articles", (req, res) => {
+  // 아티클 생성
+});
+```
+
+### 3. Python + FastAPI
+
+```python
+# main.py
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/api/articles")
+async def get_articles():
+    # 아티클 조회
+    return articles
+
+@app.post("/api/articles")
+async def create_article(article: Article):
+    # 아티클 생성
+    return new_article
+```
+
+## 배포 전략
+
+### 프론트엔드 배포
+
+- **Vercel**: Next.js 최적화
+- **Netlify**: 정적 사이트 호스팅
+- **AWS Amplify**: AWS 통합
+
+### 데이터베이스 배포
+
+- **Vercel Postgres**: Vercel 통합
+- **PlanetScale**: MySQL 호환
+- **Neon**: PostgreSQL 서버리스
+- **Railway**: 풀스택 배포
+
+### 통합 배포
+
+- **Vercel + Vercel Postgres**: 완전 통합
+- **Railway**: 풀스택 원스톱
+- **Render**: 간단한 배포
+
+## 성능 최적화
+
+### 프론트엔드 최적화
+
+- **Next.js 내장 최적화**
+  - 이미지 최적화
+  - 폰트 최적화
+  - 코드 분할
+  - 서버 컴포넌트
+
+### 데이터베이스 최적화
+
+- **인덱싱**: 쿼리 성능 향상
+- **캐싱**: Redis 또는 메모리 캐시
+- **연결 풀링**: 데이터베이스 연결 관리
+- **쿼리 최적화**: N+1 문제 해결
+
+### 배포 최적화
+
+- **CDN**: 정적 자산 캐싱
+- **압축**: Gzip/Brotli 압축
+- **캐시 헤더**: 브라우저 캐싱
+- **프리로딩**: 중요 리소스 우선 로딩
+
+## 보안 고려사항
+
+### 프론트엔드 보안
+
+- **CSP**: Content Security Policy
+- **HTTPS**: SSL/TLS 인증서
+- **XSS 방지**: 입력 검증
+- **CSRF 방지**: 토큰 검증
+
+### 백엔드 보안
+
+- **입력 검증**: SQL 인젝션 방지
+- **레이트 리미팅**: API 호출 제한
+- **CORS**: 크로스 오리진 정책
+- **환경 변수**: 민감 정보 보호
+
+## 모니터링 및 로깅
+
+### 성능 모니터링
+
+- **Vercel Analytics**: 성능 분석
+- **Google Analytics**: 사용자 분석
+- **Sentry**: 에러 추적
+- **LogRocket**: 사용자 세션 기록
+
+### 로깅
+
+- **구조화된 로깅**: JSON 형식
+- **로그 레벨**: ERROR, WARN, INFO, DEBUG
+- **로그 집계**: 중앙 집중식 로깅
+- **알림**: 중요 에러 알림
+
+- Next.js 지원
+- Supabase 확장
+- supabase 사용 시 supabase mcp 사용
