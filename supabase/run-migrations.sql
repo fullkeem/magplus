@@ -16,5 +16,4 @@
 -- 5. RLS 정책 설정 (공개 읽기)
 \i 005_setup_rls_policies.sql
 
--- 6. 초기 데이터 시드
-\i 006_seed_initial_data.sql 
+-- 실제 데이터는 Supabase MCP를 통해 추가됨 

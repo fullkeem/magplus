@@ -10,6 +10,7 @@ import { CATEGORIES } from "@/constants/categories";
 import { REGIONS } from "@/constants/regions";
 
 interface ArticleFormData {
+  id?: string;
   title: string;
   subtitle: string;
   content: string;
@@ -94,18 +95,34 @@ export default function ArticleForm({
     setIsSubmitting(true);
 
     try {
-      const submitData = { ...formData, status };
+      const { createArticle, updateArticle } = await import(
+        "@/lib/supabase/articles"
+      );
 
-      // 실제 구현에서는 API 호출
-      console.log("Submitting article:", submitData);
+      const submitData = {
+        title: formData.title,
+        content: formData.content,
+        excerpt: formData.subtitle,
+        category_id: formData.category,
+        region: formData.region,
+        images: formData.featuredImage ? [formData.featuredImage] : [],
+        status,
+        meta_title: formData.title,
+        meta_description: formData.subtitle,
+      };
 
-      // 임시 지연 (API 호출 시뮬레이션)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (isEditing && initialData?.id) {
+        await updateArticle(initialData.id, submitData);
+      } else {
+        await createArticle(submitData);
+      }
 
       router.push("/admin/articles");
     } catch (error) {
       console.error("Submit error:", error);
-      alert("저장 중 오류가 발생했습니다.");
+      alert(
+        error instanceof Error ? error.message : "저장 중 오류가 발생했습니다."
+      );
     } finally {
       setIsSubmitting(false);
     }

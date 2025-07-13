@@ -2,75 +2,59 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { CATEGORIES } from "@/constants/categories";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-
-// 임시 아티클 데이터 타입
-interface Article {
-  id: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  region: string;
-  image: string;
-  publishedAt: string;
-  readTime: number;
-}
-
-// 임시 데이터
-const MOCK_ARTICLES: Article[] = [
-  {
-    id: "1",
-    title: "성수동 숨은 카페 BREW",
-    excerpt: "산업 지역 속 숨겨진 스페셜티 커피의 성지",
-    category: "cafe",
-    region: "seoul",
-    image: "/images/articles/cafe-brew.jpg",
-    publishedAt: "2024-01-15",
-    readTime: 5,
-  },
-  {
-    id: "4",
-    title: "강남 모던 카페 MINIMAL",
-    excerpt: "미니멀한 디자인과 완벽한 커피의 조화",
-    category: "cafe",
-    region: "seoul",
-    image: "/images/articles/cafe-minimal.jpg",
-    publishedAt: "2024-01-12",
-    readTime: 4,
-  },
-  {
-    id: "2",
-    title: "을지로 레트로 바 VINYL",
-    excerpt: "LP와 함께하는 특별한 밤의 경험",
-    category: "restaurant",
-    region: "seoul",
-    image: "/images/articles/bar-vinyl.jpg",
-    publishedAt: "2024-01-14",
-    readTime: 7,
-  },
-];
+import { getArticles } from "@/lib/supabase/articles";
+import { getCategories } from "@/lib/supabase/categories";
+import type { ArticleWithCategory, Category } from "@/lib/database.types";
+import Link from "next/link";
 
 export default function CategoryPage() {
   const params = useParams();
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<ArticleWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<any>(null);
+  const [category, setCategory] = useState<Category | null>(null);
 
   useEffect(() => {
-    const categorySlug = params.slug as string;
-    const foundCategory = CATEGORIES.find((cat) => cat.slug === categorySlug);
-    setCategory(foundCategory);
-
-    // 임시로 모킹된 데이터 로드 및 필터링
-    setTimeout(() => {
-      const filteredArticles = MOCK_ARTICLES.filter(
-        (article) => article.category === foundCategory?.id
-      );
-      setArticles(filteredArticles);
-      setLoading(false);
-    }, 1000);
+    loadData();
   }, [params.slug]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const categorySlug = params.slug as string;
+
+      // 모든 카테고리를 가져와서 현재 카테고리 찾기
+      const categories = await getCategories();
+      const foundCategory = categories.find((cat) => cat.slug === categorySlug);
+
+      if (foundCategory) {
+        setCategory(foundCategory);
+
+        // 해당 카테고리의 아티클들 가져오기
+        const categoryArticles = await getArticles({
+          category: foundCategory.id,
+          status: "published",
+        });
+        setArticles(categoryArticles);
+      }
+    } catch (error) {
+      console.error("Error loading category data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryIcon = (slug: string) => {
+    const categoryMap: Record<string, string> = {
+      cafe: "☕",
+      restaurant: "🍽️",
+      "popup-store": "🏪",
+      culture: "🎭",
+      shopping: "🛍️",
+      exhibition: "🎨",
+    };
+    return categoryMap[slug] || "📍";
+  };
 
   if (loading) {
     return (
@@ -91,74 +75,91 @@ export default function CategoryPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* 카테고리 헤더 */}
-      <div className="text-center mb-16">
-        <div className="flex items-center justify-center mb-6">
-          <span className="text-4xl mr-4">{category.icon}</span>
-          <h1 className="text-4xl md:text-5xl font-light text-black tracking-tight">
-            {category.name}
-          </h1>
+      <div className="mb-12">
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-4xl">{getCategoryIcon(category.slug)}</span>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-light text-black">
+              {category.name}
+            </h1>
+            {category.description && (
+              <p className="text-gray-600 text-lg font-light mt-2">
+                {category.description}
+              </p>
+            )}
+          </div>
         </div>
-        <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto">
-          {category.description}
+      </div>
+
+      {/* 아티클 개수 */}
+      <div className="mb-8">
+        <p className="text-sm text-gray-500">
+          {articles.length} {articles.length === 1 ? "article" : "articles"} in
+          this category
         </p>
-        <div className="mt-8">
-          <span className="text-sm text-gray-500 tracking-wide">
-            {articles.length}개의 아티클
-          </span>
-        </div>
       </div>
 
       {/* 아티클 그리드 */}
       {articles.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-500 text-lg font-light">
-            이 카테고리에는 아직 아티클이 없습니다.
+            No articles found in this category yet.
+          </p>
+          <p className="text-gray-400 text-sm mt-2">
+            Check back soon for new content!
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {articles.map((article) => (
-            <article key={article.id} className="group cursor-pointer">
-              <div className="aspect-[4/3] bg-gray-100 mb-4 overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">Image</span>
+            <article key={article.id} className="group">
+              <Link href={`/articles/${article.id}`}>
+                <div className="aspect-[4/3] bg-gray-100 mb-4 overflow-hidden">
+                  {article.images && article.images.length > 0 ? (
+                    <img
+                      src={article.images[0]}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-400 text-4xl">
+                        {getCategoryIcon(category.slug)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-xs tracking-wide text-gray-500">
-                  <span className="uppercase">{category.name}</span>
-                  <span>•</span>
-                  <span>{article.readTime} min read</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide">
+                    <span>{category.name}</span>
+                    {article.region && (
+                      <>
+                        <span>•</span>
+                        <span>{article.region}</span>
+                      </>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-medium text-black group-hover:text-gray-600 transition-colors leading-tight">
+                    {article.title}
+                  </h3>
+                  {article.excerpt && (
+                    <p className="text-sm text-gray-600 font-light leading-relaxed">
+                      {article.excerpt}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 text-xs text-gray-400">
+                    <span>{article.views || 0} views</span>
+                    <span>{article.likes || 0} likes</span>
+                    {article.published_at && (
+                      <span>
+                        {new Date(article.published_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
-
-                <h2 className="text-xl font-light text-black group-hover:text-gray-600 transition-colors">
-                  {article.title}
-                </h2>
-
-                <p className="text-gray-600 font-light leading-relaxed">
-                  {article.excerpt}
-                </p>
-
-                <div className="text-xs text-gray-400 tracking-wide">
-                  {new Date(article.publishedAt).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </div>
-              </div>
+              </Link>
             </article>
           ))}
-        </div>
-      )}
-
-      {/* 로드 더 버튼 */}
-      {articles.length > 0 && (
-        <div className="text-center mt-16">
-          <button className="px-8 py-3 border border-gray-300 text-sm font-light tracking-wide text-gray-600 hover:border-black hover:text-black transition-colors">
-            LOAD MORE
-          </button>
         </div>
       )}
     </div>

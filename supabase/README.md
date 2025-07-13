@@ -56,7 +56,6 @@ MAG+ 웹매거진을 위한 PostgreSQL 데이터베이스 스키마입니다. �
 \i migrations/003_create_subscriptions.sql
 \i migrations/004_create_shares.sql
 \i migrations/005_setup_rls_policies.sql
-\i migrations/006_seed_initial_data.sql
 ```
 
 ### 2. 통합 스크립트 실행
@@ -65,6 +64,15 @@ MAG+ 웹매거진을 위한 PostgreSQL 데이터베이스 스키마입니다. �
 -- run-migrations.sql 파일을 Supabase SQL Editor에서 실행
 \i run-migrations.sql
 ```
+
+### 3. 실제 데이터 추가
+
+실제 아티클 데이터는 Supabase MCP를 통해 추가되었습니다:
+
+- 13개의 실제 아티클 (5개 카테고리)
+- 지역별 분포 (서울, 부산, 대구, 인천, 광주)
+- 구독자 데이터 (10명)
+- 공유 통계 데이터 (39건)
 
 ## 주요 특징
 
