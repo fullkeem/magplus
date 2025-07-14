@@ -7,11 +7,8 @@ import { getArticle } from "@/lib/supabase/articles";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-interface EditArticlePageProps {
-  params: { id: string };
-}
-
-export default function EditArticlePage({ params }: EditArticlePageProps) {
+export default function EditArticlePage() {
+  const params = useParams();
   const [article, setArticle] = useState<ArticleWithCategory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +21,7 @@ export default function EditArticlePage({ params }: EditArticlePageProps) {
     try {
       setLoading(true);
       setError(null);
-      const articleData = await getArticle(params.id);
+      const articleData = await getArticle(params.id as string);
 
       if (articleData) {
         setArticle(articleData);
