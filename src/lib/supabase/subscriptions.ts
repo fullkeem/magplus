@@ -1,4 +1,8 @@
 import { supabase } from "./client";
+import {
+  sendEmail,
+  generateVerificationToken as generateToken,
+} from "../email/client";
 import type {
   Subscription,
   SubscriptionInsert,
@@ -35,7 +39,7 @@ export async function subscribe(email: string, categories: string[] = []) {
     return data as Subscription;
   } else {
     // 새로운 구독 생성
-    const verificationToken = generateVerificationToken();
+    const verificationToken = generateToken();
 
     const { data, error } = await supabase
       .from("subscriptions")
@@ -52,8 +56,16 @@ export async function subscribe(email: string, categories: string[] = []) {
       throw new Error("구독 신청에 실패했습니다.");
     }
 
-    // 실제 구현에서는 이메일 인증 메일 발송
-    // await sendVerificationEmail(email, verificationToken);
+    // 인증 이메일 발송
+    await sendEmail({
+      to: email,
+      subject: "K-웹매거진 이메일 인증",
+      template: "verification",
+      data: {
+        token: verificationToken,
+        email,
+      },
+    });
 
     return data as Subscription;
   }
@@ -95,6 +107,18 @@ export async function verifyEmail(token: string) {
   if (error) {
     console.error("Error verifying email:", error);
     throw new Error("이메일 인증에 실패했습니다.");
+  }
+
+  // 환영 이메일 발송
+  if (data) {
+    await sendEmail({
+      to: data.email,
+      subject: "K-웹매거진 구독을 환영합니다!",
+      template: "welcome",
+      data: {
+        email: data.email,
+      },
+    });
   }
 
   return data as Subscription;
