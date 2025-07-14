@@ -1,8 +1,4 @@
 import { supabase } from "./client";
-import {
-  sendEmail,
-  generateVerificationToken as generateToken,
-} from "../email/client";
 import type {
   Subscription,
   SubscriptionInsert,
@@ -19,109 +15,106 @@ export async function subscribe(email: string, categories: string[] = []) {
     .single();
 
   if (existing) {
-    // 이미 구독된 경우 카테고리 업데이트
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .update({
-        is_active: true,
-        subscribed_categories: categories,
-        unsubscribed_at: null,
-      })
-      .eq("email", email)
-      .select()
-      .single();
+    if (existing.is_active) {
+      throw new Error("이미 구독된 이메일입니다.");
+    } else {
+      // 비활성화된 구독을 다시 활성화
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({
+          is_active: true,
+          subscribed_categories: categories,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", email);
 
-    if (error) {
-      console.error("Error updating subscription:", error);
-      throw new Error("구독 업데이트에 실패했습니다.");
+      if (error) {
+        throw new Error(`구독 재활성화 실패: ${error.message}`);
+      }
+
+      return { success: true, message: "구독이 재활성화되었습니다." };
     }
-
-    return data as Subscription;
-  } else {
-    // 새로운 구독 생성
-    const verificationToken = generateToken();
-
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .insert({
-        email,
-        subscribed_categories: categories,
-        verification_token: verificationToken,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating subscription:", error);
-      throw new Error("구독 신청에 실패했습니다.");
-    }
-
-    // 인증 이메일 발송
-    await sendEmail({
-      to: email,
-      subject: "K-웹매거진 이메일 인증",
-      template: "verification",
-      data: {
-        token: verificationToken,
-        email,
-      },
-    });
-
-    return data as Subscription;
   }
+
+  // 새로운 구독 생성
+  const verificationToken = generateVerificationToken();
+  const subscriptionData: SubscriptionInsert = {
+    email,
+    subscribed_categories: categories,
+    verification_token: verificationToken,
+    is_verified: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from("subscriptions")
+    .insert(subscriptionData);
+
+  if (error) {
+    throw new Error(`구독 신청 실패: ${error.message}`);
+  }
+
+  // 개발 환경에서는 콘솔에 인증 링크 출력
+  if (process.env.NODE_ENV === "development") {
+    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${verificationToken}`;
+    console.log("📧 이메일 인증 링크:", verificationUrl);
+  }
+
+  return {
+    success: true,
+    message: "구독 신청이 완료되었습니다. 이메일을 확인해주세요.",
+  };
 }
 
 // 구독 해지
 export async function unsubscribe(email: string) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("subscriptions")
     .update({
       is_active: false,
-      unsubscribed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
-    .eq("email", email)
-    .select()
-    .single();
+    .eq("email", email);
 
   if (error) {
-    console.error("Error unsubscribing:", error);
-    throw new Error("구독 해지에 실패했습니다.");
+    throw new Error(`구독 해지 실패: ${error.message}`);
   }
 
-  return data as Subscription;
+  return { success: true, message: "구독이 해지되었습니다." };
 }
 
 // 이메일 인증
 export async function verifyEmail(token: string) {
-  const { data, error } = await supabase
+  const { data: subscription, error: selectError } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("verification_token", token)
+    .single();
+
+  if (selectError || !subscription) {
+    throw new Error("유효하지 않은 인증 토큰입니다.");
+  }
+
+  if (subscription.is_verified) {
+    throw new Error("이미 인증된 이메일입니다.");
+  }
+
+  const { error } = await supabase
     .from("subscriptions")
     .update({
       is_verified: true,
-      verified_at: new Date().toISOString(),
       verification_token: null,
+      updated_at: new Date().toISOString(),
     })
-    .eq("verification_token", token)
-    .select()
-    .single();
+    .eq("verification_token", token);
 
   if (error) {
-    console.error("Error verifying email:", error);
-    throw new Error("이메일 인증에 실패했습니다.");
+    throw new Error(`이메일 인증 실패: ${error.message}`);
   }
 
-  // 환영 이메일 발송
-  if (data) {
-    await sendEmail({
-      to: data.email,
-      subject: "K-웹매거진 구독을 환영합니다!",
-      template: "welcome",
-      data: {
-        email: data.email,
-      },
-    });
-  }
-
-  return data as Subscription;
+  return { success: true, message: "이메일 인증이 완료되었습니다." };
 }
 
 // 구독 정보 조회
@@ -133,11 +126,10 @@ export async function getSubscription(email: string) {
     .single();
 
   if (error) {
-    console.error("Error fetching subscription:", error);
-    return null;
+    throw new Error(`구독 정보 조회 실패: ${error.message}`);
   }
 
-  return data as Subscription;
+  return data;
 }
 
 // 구독 카테고리 업데이트
@@ -145,72 +137,63 @@ export async function updateSubscriptionCategories(
   email: string,
   categories: string[]
 ) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("subscriptions")
     .update({
       subscribed_categories: categories,
+      updated_at: new Date().toISOString(),
     })
-    .eq("email", email)
-    .select()
-    .single();
+    .eq("email", email);
 
   if (error) {
-    console.error("Error updating subscription categories:", error);
-    throw new Error("구독 카테고리 업데이트에 실패했습니다.");
+    throw new Error(`구독 카테고리 업데이트 실패: ${error.message}`);
   }
 
-  return data as Subscription;
+  return { success: true, message: "구독 카테고리가 업데이트되었습니다." };
 }
 
-// 활성 구독자 목록 조회 (관리자용)
+// 활성 구독자 목록 조회
 export async function getActiveSubscriptions(limit = 100, offset = 0) {
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
     .eq("is_active", true)
     .eq("is_verified", true)
-    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {
-    console.error("Error fetching active subscriptions:", error);
-    throw new Error("구독자 목록을 불러오는데 실패했습니다.");
+    throw new Error(`구독자 목록 조회 실패: ${error.message}`);
   }
 
-  return data as Subscription[];
+  return data || [];
 }
 
-// 구독 통계 조회 (관리자용)
+// 구독 통계 조회
 export async function getSubscriptionStats() {
-  const { data: totalSubs, error: totalError } = await supabase
+  const { data, error } = await supabase
     .from("subscriptions")
-    .select("*", { count: "exact", head: true });
+    .select("is_active, is_verified, subscribed_categories");
 
-  const { data: activeSubs, error: activeError } = await supabase
-    .from("subscriptions")
-    .select("*", { count: "exact", head: true })
-    .eq("is_active", true);
-
-  const { data: verifiedSubs, error: verifiedError } = await supabase
-    .from("subscriptions")
-    .select("*", { count: "exact", head: true })
-    .eq("is_verified", true);
-
-  if (totalError || activeError || verifiedError) {
-    console.error("Error fetching subscription stats");
-    throw new Error("구독 통계를 불러오는데 실패했습니다.");
+  if (error) {
+    throw new Error(`구독 통계 조회 실패: ${error.message}`);
   }
 
-  return {
-    total: totalSubs?.length || 0,
-    active: activeSubs?.length || 0,
-    verified: verifiedSubs?.length || 0,
+  const stats = {
+    total: data?.length || 0,
+    active: data?.filter((s) => s.is_active).length || 0,
+    verified: data?.filter((s) => s.is_verified).length || 0,
+    unverified: data?.filter((s) => !s.is_verified).length || 0,
   };
+
+  return stats;
 }
 
-// 인증 토큰 생성 함수
+// 인증 토큰 생성
 function generateVerificationToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
 }
 
 // 이메일 유효성 검사

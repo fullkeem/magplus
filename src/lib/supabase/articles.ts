@@ -16,60 +16,46 @@ function generateSlug(title: string): string {
     .trim();
 }
 
-// 아티클 목록 조회 (필터링 지원)
+// 캐시 설정
+const CACHE_REVALIDATION_TIME = 60 * 5; // 5분
+
 export async function getArticles(params?: {
   category?: string;
   region?: string;
-  search?: string;
-  status?: "draft" | "published";
+  status?: string;
   limit?: number;
-  offset?: number;
-  orderBy?: "created_at" | "views" | "likes" | "updated_at";
+  orderBy?: "created_at" | "views" | "likes";
 }) {
-  let query = supabase.from("articles").select(
-    `
+  const {
+    category,
+    region,
+    status = "published",
+    limit,
+    orderBy = "created_at",
+  } = params || {};
+
+  let query = supabase
+    .from("articles")
+    .select(
+      `
       *,
       category:categories(*)
     `
-  );
+    )
+    .eq("status", status);
 
-  // 필터 적용
-  if (params?.category && params.category !== "all") {
-    query = query.eq("category_id", params.category);
+  if (category) {
+    query = query.eq("category_id", category);
   }
 
-  if (params?.region && params.region !== "all") {
-    query = query.eq("region", params.region);
+  if (region) {
+    query = query.eq("region", region);
   }
 
-  if (params?.status) {
-    query = query.eq("status", params.status);
-  } else {
-    // 기본적으로 발행된 아티클만 조회
-    query = query.eq("status", "published");
-  }
+  query = query.order(orderBy, { ascending: false });
 
-  if (params?.search) {
-    query = query.or(
-      `title.ilike.%${params.search}%,excerpt.ilike.%${params.search}%,content.ilike.%${params.search}%`
-    );
-  }
-
-  // 정렬 적용
-  const orderBy = params?.orderBy || "created_at";
-  const ascending = orderBy === "created_at" ? false : false; // 최신순/높은순으로 정렬
-  query = query.order(orderBy, { ascending });
-
-  // 페이지네이션
-  if (params?.limit) {
-    query = query.limit(params.limit);
-  }
-
-  if (params?.offset) {
-    query = query.range(
-      params.offset,
-      params.offset + (params?.limit || 10) - 1
-    );
+  if (limit) {
+    query = query.limit(limit);
   }
 
   const { data, error } = await query;
@@ -82,7 +68,6 @@ export async function getArticles(params?: {
   return data as ArticleWithCategory[];
 }
 
-// 아티클 상세 조회
 export async function getArticle(id: string) {
   const { data, error } = await supabase
     .from("articles")
@@ -93,11 +78,12 @@ export async function getArticle(id: string) {
     `
     )
     .eq("id", id)
+    .eq("status", "published")
     .single();
 
   if (error) {
     console.error("Error fetching article:", error);
-    throw new Error("아티클을 찾을 수 없습니다.");
+    return null;
   }
 
   return data as ArticleWithCategory;
@@ -180,7 +166,6 @@ export async function deleteArticle(id: string) {
   }
 }
 
-// 조회수 증가
 export async function incrementViews(id: string) {
   const { data: article, error: fetchError } = await supabase
     .from("articles")
@@ -200,10 +185,10 @@ export async function incrementViews(id: string) {
 
   if (error) {
     console.error("Error incrementing views:", error);
+    throw error;
   }
 }
 
-// 좋아요 증가
 export async function incrementLikes(id: string) {
   const { data: article, error: fetchError } = await supabase
     .from("articles")
@@ -223,6 +208,7 @@ export async function incrementLikes(id: string) {
 
   if (error) {
     console.error("Error incrementing likes:", error);
+    throw error;
   }
 }
 
@@ -252,4 +238,76 @@ export async function getRelatedArticles(
   }
 
   return data as ArticleWithCategory[];
+}
+
+// 캐시된 기사 목록 조회 (서버 컴포넌트용)
+export async function getArticlesCached(params?: {
+  category?: string;
+  region?: string;
+  status?: string;
+  limit?: number;
+  orderBy?: "created_at" | "views" | "likes";
+}) {
+  const {
+    category,
+    region,
+    status = "published",
+    limit,
+    orderBy = "created_at",
+  } = params || {};
+
+  let query = supabase
+    .from("articles")
+    .select(
+      `
+      *,
+      category:categories(*)
+    `
+    )
+    .eq("status", status);
+
+  if (category) {
+    query = query.eq("category_id", category);
+  }
+
+  if (region) {
+    query = query.eq("region", region);
+  }
+
+  query = query.order(orderBy, { ascending: false });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching articles:", error);
+    throw error;
+  }
+
+  return data as ArticleWithCategory[];
+}
+
+// 캐시된 단일 기사 조회 (서버 컴포넌트용)
+export async function getArticleCached(id: string) {
+  const { data, error } = await supabase
+    .from("articles")
+    .select(
+      `
+      *,
+      category:categories(*)
+    `
+    )
+    .eq("id", id)
+    .eq("status", "published")
+    .single();
+
+  if (error) {
+    console.error("Error fetching article:", error);
+    return null;
+  }
+
+  return data as ArticleWithCategory;
 }

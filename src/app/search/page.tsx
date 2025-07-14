@@ -9,6 +9,7 @@ import Input from "@/components/ui/Input";
 import { getArticles } from "@/lib/supabase/articles";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
+import Image from "next/image";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -122,7 +123,7 @@ function SearchContent() {
                 className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="aspect-video bg-gray-200 relative">
-                  <img
+                  <Image
                     src={article.images?.[0] || "/placeholder-image.jpg"}
                     alt={article.title}
                     className="w-full h-full object-cover"
