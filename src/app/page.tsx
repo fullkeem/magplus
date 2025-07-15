@@ -11,6 +11,7 @@ import { getArticles } from "@/lib/supabase/articles";
 import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { stripMarkdown } from "@/utils/markdown";
 
 export default function HomePage() {
   const { setCategory } = useFilters();
@@ -80,7 +81,7 @@ export default function HomePage() {
     const categoryMap: Record<string, string> = {
       cafe: "☕",
       restaurant: "🍽️",
-      "popup-store": "🏪",
+      popup: "🏪",
       culture: "🎭",
       shopping: "🛍️",
       exhibition: "🎨",
@@ -114,7 +115,7 @@ export default function HomePage() {
                 <Link
                   href="/articles"
                   className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 border border-black text-sm sm:text-base font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 min-h-[48px]"
-                  aria-label="모든 아티클 보기"
+                  aria-label="모든 기사 보기"
                 >
                   Explore Articles
                   <ArrowRightIcon className="ml-2 h-4 w-4" aria-hidden="true" />
@@ -205,7 +206,7 @@ export default function HomePage() {
                 <Link
                   href="/articles"
                   className="inline-flex items-center text-sm font-light text-gray-600 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-sm px-2 py-1"
-                  aria-label="모든 아티클 보기"
+                  aria-label="모든 기사 보기"
                 >
                   View All
                   <ArrowRightIcon className="ml-1 h-4 w-4" aria-hidden="true" />
@@ -262,7 +263,7 @@ export default function HomePage() {
                           </h3>
                           {article.excerpt && (
                             <p className="text-sm text-gray-600 font-light leading-relaxed line-clamp-2">
-                              {article.excerpt}
+                              {stripMarkdown(article.excerpt)}
                             </p>
                           )}
                           <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
@@ -384,7 +385,7 @@ export default function HomePage() {
                           </h3>
                           {article.excerpt && (
                             <p className="text-sm text-gray-600 font-light leading-relaxed line-clamp-2">
-                              {article.excerpt}
+                              {stripMarkdown(article.excerpt)}
                             </p>
                           )}
                           <div className="flex items-center justify-between mt-4 text-xs text-gray-500">

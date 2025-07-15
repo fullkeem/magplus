@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
+import { stripMarkdown } from "@/utils/markdown";
 
 interface Props {
   category: Category;
@@ -14,7 +15,7 @@ export default function CategoryPageClient({ category, articles }: Props) {
     const categoryMap: Record<string, string> = {
       cafe: "☕",
       restaurant: "🍽️",
-      "popup-store": "🏪",
+      popup: "🏪",
       culture: "🎭",
       shopping: "🛍️",
       exhibition: "🎨",
@@ -107,7 +108,7 @@ export default function CategoryPageClient({ category, articles }: Props) {
                   </h3>
                   {article.excerpt && (
                     <p className="text-sm text-gray-600 font-light leading-relaxed">
-                      {article.excerpt}
+                      {stripMarkdown(article.excerpt)}
                     </p>
                   )}
                   <div className="flex items-center gap-4 text-xs text-gray-400">

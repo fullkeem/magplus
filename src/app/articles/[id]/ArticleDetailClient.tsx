@@ -17,6 +17,8 @@ import { recordShare } from "@/lib/supabase/shares";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   article: ArticleWithCategory;
@@ -26,10 +28,13 @@ export default function ArticleDetailClient({ article }: Props) {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(article.likes || 0);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     // 조회수 증가
     incrementViews(article.id);
+    // 클라이언트 사이드 렌더링 확인
+    setIsClient(true);
   }, [article.id]);
 
   const handleShare = async (platform: string = "clipboard") => {
@@ -190,12 +195,88 @@ export default function ArticleDetailClient({ article }: Props) {
 
       {/* 아티클 내용 */}
       <div className="prose prose-lg max-w-none">
-        <div
-          className="text-gray-800 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html: article.content.replace(/\n/g, "<br/>"),
-          }}
-        />
+        <div className="text-gray-800 leading-relaxed">
+          {isClient ? (
+            <ReactMarkdown
+              key={article.id}
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => (
+                  <h2 className="text-2xl font-semibold text-black mt-8 mb-4">
+                    {children}
+                  </h2>
+                ),
+                h2: ({ children }) => (
+                  <h3 className="text-xl font-semibold text-black mt-6 mb-3">
+                    {children}
+                  </h3>
+                ),
+                h3: ({ children }) => (
+                  <h4 className="text-lg font-semibold text-black mt-5 mb-2">
+                    {children}
+                  </h4>
+                ),
+                p: ({ children }) => (
+                  <p className="text-gray-800 leading-relaxed mb-4">
+                    {children}
+                  </p>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside mb-4 space-y-2">
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside mb-4 space-y-2">
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li className="text-gray-800 leading-relaxed">{children}</li>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-black">
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em className="italic text-gray-700">{children}</em>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">
+                    {children}
+                  </blockquote>
+                ),
+                code: ({ children }) => (
+                  <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">
+                    {children}
+                  </code>
+                ),
+                pre: ({ children }) => (
+                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4">
+                    {children}
+                  </pre>
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {article.content}
+            </ReactMarkdown>
+          ) : (
+            <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+              {article.content}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 추가 이미지들 */}

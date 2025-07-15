@@ -9,6 +9,7 @@ import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
+import { stripMarkdown } from "@/utils/markdown";
 
 export default function ArticlesPageClient() {
   const { selectedCategory, selectedRegion, searchQuery } = useFilters();
@@ -75,7 +76,7 @@ export default function ArticlesPageClient() {
     const categoryMap: Record<string, string> = {
       cafe: "☕",
       restaurant: "🍽️",
-      "popup-store": "🏪",
+      popup: "🏪",
       culture: "🎭",
       shopping: "🛍️",
       exhibition: "🎨",
@@ -101,7 +102,7 @@ export default function ArticlesPageClient() {
       {/* 페이지 헤더 */}
       <div className="mb-12">
         <h1 className="text-3xl md:text-4xl font-light text-black mb-4">
-          모든 아티클
+          모든 기사
         </h1>
         <p className="text-gray-600 text-lg font-light">
           서울의 가장 흥미로운 장소와 경험을 발견하세요
@@ -169,7 +170,7 @@ export default function ArticlesPageClient() {
                   </h3>
                   {article.excerpt && (
                     <p className="text-sm text-gray-600 font-light leading-relaxed">
-                      {article.excerpt}
+                      {stripMarkdown(article.excerpt)}
                     </p>
                   )}
                   <div className="flex items-center gap-4 text-xs text-gray-400">
