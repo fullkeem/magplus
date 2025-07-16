@@ -133,14 +133,6 @@ export default async function HomePage() {
                     />
                   </svg>
                 </Link>
-
-                <Link
-                  href="#newsletter"
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-light tracking-wide text-gray-600 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 min-h-[48px]"
-                  aria-label="뉴스레터 구독하기"
-                >
-                  Subscribe to Newsletter
-                </Link>
               </div>
             </div>
           </div>

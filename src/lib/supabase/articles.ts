@@ -11,25 +11,154 @@ function generateSlug(title: string): string {
     .trim();
 }
 
-// 모든 아티클 조회 (발행된 것만)
-export async function getAllArticles(): Promise<ArticleWithCategory[]> {
-  const { data, error } = await supabase
-    .from("articles")
-    .select(
-      `
-      *,
-      category:categories(*)
-    `
-    )
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
+// 페이지네이션 타입 정의
+export interface PaginationResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasMore: boolean;
+}
 
-  if (error) {
-    console.error("Error fetching articles:", error);
-    return [];
+// 페이지네이션과 함께 아티클 조회
+export async function getArticlesPaginated(
+  page: number = 1,
+  pageSize: number = 12,
+  options: {
+    categoryId?: string;
+    region?: string;
+    searchQuery?: string;
+    sortBy?: "latest" | "popular" | "oldest";
+    showAll?: boolean; // 모든 아티클 보기 옵션 추가
+  } = {}
+): Promise<PaginationResult<ArticleWithCategory>> {
+  try {
+    const {
+      categoryId,
+      region,
+      searchQuery,
+      sortBy = "latest",
+      showAll = false,
+    } = options;
+
+    // 필터가 없고 showAll이 true이면 모든 아티클을 보여줌
+    const hasFilters = !!(categoryId || region || searchQuery);
+    const shouldShowAll = showAll && !hasFilters;
+
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    console.log("🔍 Supabase 쿼리 실행:", {
+      page,
+      pageSize,
+      from,
+      to,
+      options,
+      shouldShowAll,
+      hasFilters,
+    });
+
+    let query = supabase
+      .from("articles")
+      .select(
+        `
+        *,
+        category:categories(*)
+      `,
+        { count: "exact" }
+      )
+      .eq("status", "published");
+
+    // 필터 적용
+    if (categoryId) {
+      query = query.eq("category_id", categoryId);
+    }
+
+    if (region) {
+      query = query.eq("region", region);
+    }
+
+    if (searchQuery) {
+      query = query.or(
+        `title.ilike.%${searchQuery}%, content.ilike.%${searchQuery}%, excerpt.ilike.%${searchQuery}%`
+      );
+    }
+
+    // 정렬 적용
+    switch (sortBy) {
+      case "latest":
+        query = query.order("created_at", { ascending: false });
+        break;
+      case "popular":
+        query = query.order("views", { ascending: false });
+        break;
+      case "oldest":
+        query = query.order("created_at", { ascending: true });
+        break;
+    }
+
+    // 페이지네이션 적용 (showAll이 아닐 때만)
+    if (!shouldShowAll) {
+      query = query.range(from, to);
+    }
+
+    const { data, error, count } = await query;
+
+    console.log("📊 Supabase 쿼리 결과:", {
+      data: data?.length,
+      error,
+      count,
+      totalPages: shouldShowAll ? 1 : Math.ceil((count || 0) / pageSize),
+      shouldShowAll,
+    });
+
+    if (error) {
+      console.error("Error fetching articles with pagination:", error);
+      throw new Error("아티클을 불러오는데 실패했습니다.");
+    }
+
+    const total = count || 0;
+    const totalPages = shouldShowAll ? 1 : Math.ceil(total / pageSize);
+
+    return {
+      data: data || [],
+      total,
+      page: shouldShowAll ? 1 : page,
+      pageSize: shouldShowAll ? total : pageSize,
+      totalPages,
+      hasMore: shouldShowAll ? false : page < totalPages,
+    };
+  } catch (error) {
+    console.error("Error in getArticlesPaginated:", error);
+    throw error;
   }
+}
 
-  return data || [];
+// 모든 아티클 조회 (발행된 것만) - 기존 함수 개선
+export async function getAllArticles(): Promise<ArticleWithCategory[]> {
+  try {
+    const { data, error } = await supabase
+      .from("articles")
+      .select(
+        `
+        *,
+        category:categories(*)
+      `
+      )
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching articles:", error);
+      throw new Error("아티클을 불러오는데 실패했습니다.");
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in getAllArticles:", error);
+    throw error;
+  }
 }
 
 // 특정 아티클 조회
