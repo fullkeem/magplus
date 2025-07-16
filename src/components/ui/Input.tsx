@@ -32,10 +32,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         .join(" ") || undefined;
 
     const baseClasses =
-      "w-full font-light tracking-wide transition-colors min-h-[44px] px-3 py-2";
+      "w-full font-light tracking-wide transition-colors min-h-[44px] px-3 py-2 text-gray-900 placeholder-gray-500";
     const variantClasses = {
       default:
-        "border border-gray-300 focus:border-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1",
+        "border border-gray-300 focus:border-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1 bg-white",
       minimal:
         "px-0 py-2 border-0 border-b border-gray-300 focus:border-black focus:outline-none bg-transparent focus:ring-0",
     };

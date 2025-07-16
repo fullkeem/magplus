@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useFilters } from "@/hooks/useStores";
-import { REGIONS } from "@/constants/regions";
-import type { CategoryFilter } from "@/constants/categories";
-import type { RegionFilter } from "@/constants/regions";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import {
-  getArticlesPaginated,
-  type PaginationResult,
-} from "@/lib/supabase/articles";
-import { getCategories } from "@/lib/supabase/categories";
-import type { ArticleWithCategory, Category } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
+
+import { useState, useEffect, useCallback } from "react";
+import { useFilters } from "@/hooks/useStores";
+import type { CategoryFilter } from "@/constants/categories";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import type { PaginationResult } from "@/lib/supabase/articles";
+import { getCategories } from "@/lib/supabase/categories";
+import type { ArticleWithCategory, Category } from "@/lib/database.types";
 
 export default function ArticlesPageClient() {
   const {
@@ -22,7 +18,6 @@ export default function ArticlesPageClient() {
     sortBy,
     searchQuery,
     setCategory,
-    setRegion,
     setSortBy,
     setSearchQuery,
     clearFilters,
@@ -64,14 +59,18 @@ export default function ArticlesPageClient() {
           selectedRegion ||
           searchQuery
         );
-        const showAll = !hasFilters && reset; // 첫 로딩이고 필터가 없을 때만
+        const showAll = !hasFilters; // 필터가 없을 때는 항상 모든 아티클 표시
 
+        // Dynamic import로 함수 로딩
+        const { getArticlesPaginated } = await import(
+          "@/lib/supabase/articles"
+        );
         const result = await getArticlesPaginated(page, PAGE_SIZE, {
           categorySlug: selectedCategory || undefined, // categoryId에서 categorySlug로 변경
           region: selectedRegion || undefined,
           searchQuery: searchQuery || undefined,
           sortBy,
-          showAll, // showAll 옵션 추가
+          showAll: showAll, // showAll 옵션 명시적 전달
         });
 
         console.log("✅ 아티클 로딩 완료:", result);
@@ -104,7 +103,6 @@ export default function ArticlesPageClient() {
     },
     [selectedCategory, selectedRegion, searchQuery, sortBy]
   );
-
   // 카테고리 로딩
   const loadCategories = useCallback(async () => {
     try {
@@ -205,29 +203,12 @@ export default function ArticlesPageClient() {
                 const value = e.target.value;
                 setCategory(value === "" ? null : (value as CategoryFilter));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
             >
               <option value="">모든 카테고리</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.slug}>
                   {category.name}
-                </option>
-              ))}
-            </select>
-
-            {/* 지역 필터 */}
-            <select
-              value={selectedRegion || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setRegion(value === "" ? null : (value as RegionFilter));
-              }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-            >
-              <option value="">모든 지역</option>
-              {REGIONS.map((region) => (
-                <option key={region.id} value={region.name}>
-                  {region.name}
                 </option>
               ))}
             </select>
@@ -238,7 +219,7 @@ export default function ArticlesPageClient() {
               onChange={(e) =>
                 setSortBy(e.target.value as "latest" | "popular" | "oldest")
               }
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
             >
               <option value="latest">최신순</option>
               <option value="popular">조회수순</option>
@@ -261,7 +242,7 @@ export default function ArticlesPageClient() {
               placeholder="아티클 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white placeholder-gray-500"
             />
           </div>
         </div>
@@ -339,77 +320,79 @@ export default function ArticlesPageClient() {
             </div>
 
             {/* 페이지네이션 - 필터가 적용되었을 때만 표시 */}
-            {(selectedCategory || selectedRegion || searchQuery) && (
-              <div className="mt-12 flex flex-col items-center space-y-4">
-                {/* 더 보기 버튼 (무한 스크롤 스타일) */}
-                {articlesData.hasMore && (
-                  <button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loadingMore ? (
-                      <div className="flex items-center space-x-2">
-                        <LoadingSpinner size="sm" />
-                        <span>로딩 중...</span>
-                      </div>
-                    ) : (
-                      "더 보기"
-                    )}
-                  </button>
-                )}
-
-                {/* 페이지 번호 네비게이션 */}
-                {articlesData.totalPages > 1 && (
-                  <div className="flex items-center space-x-2">
+            {(selectedCategory || selectedRegion || searchQuery) &&
+              articlesData.totalPages > 1 && (
+                <div className="mt-12 flex flex-col items-center space-y-4">
+                  {/* 더 보기 버튼 (무한 스크롤 스타일) */}
+                  {articlesData.hasMore && (
                     <button
-                      onClick={() => goToPage(articlesData.page - 1)}
-                      disabled={articlesData.page === 1}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      이전
+                      {loadingMore ? (
+                        <div className="flex items-center space-x-2">
+                          <LoadingSpinner size="sm" />
+                          <span>로딩 중...</span>
+                        </div>
+                      ) : (
+                        "더 보기"
+                      )}
                     </button>
+                  )}
 
-                    {/* 페이지 번호들 */}
-                    {Array.from(
-                      { length: Math.min(5, articlesData.totalPages) },
-                      (_, i) => {
-                        const pageNum = Math.max(1, articlesData.page - 2) + i;
-                        if (pageNum > articlesData.totalPages) return null;
+                  {/* 페이지 번호 네비게이션 */}
+                  {articlesData.totalPages > 1 && (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => goToPage(articlesData.page - 1)}
+                        disabled={articlesData.page === 1}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        이전
+                      </button>
 
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => goToPage(pageNum)}
-                            className={`px-3 py-2 text-sm border rounded-lg ${
-                              pageNum === articlesData.page
-                                ? "bg-black text-white border-black"
-                                : "border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      }
-                    )}
+                      {/* 페이지 번호들 */}
+                      {Array.from(
+                        { length: Math.min(5, articlesData.totalPages) },
+                        (_, i) => {
+                          const pageNum =
+                            Math.max(1, articlesData.page - 2) + i;
+                          if (pageNum > articlesData.totalPages) return null;
 
-                    <button
-                      onClick={() => goToPage(articlesData.page + 1)}
-                      disabled={articlesData.page === articlesData.totalPages}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      다음
-                    </button>
-                  </div>
-                )}
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => goToPage(pageNum)}
+                              className={`px-3 py-2 text-sm border rounded-lg ${
+                                pageNum === articlesData.page
+                                  ? "bg-black text-white border-black"
+                                  : "border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+                      )}
 
-                {/* 페이지 정보 */}
-                <p className="text-sm text-gray-500">
-                  {articlesData.page} / {articlesData.totalPages} 페이지 (총{" "}
-                  {articlesData.total}개)
-                </p>
-              </div>
-            )}
+                      <button
+                        onClick={() => goToPage(articlesData.page + 1)}
+                        disabled={articlesData.page === articlesData.totalPages}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        다음
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 페이지 정보 */}
+                  <p className="text-sm text-gray-500">
+                    {articlesData.page} / {articlesData.totalPages} 페이지 (총{" "}
+                    {articlesData.total}개)
+                  </p>
+                </div>
+              )}
 
             {/* 필터가 없을 때 표시할 간단한 통계 */}
             {!selectedCategory && !selectedRegion && !searchQuery && (

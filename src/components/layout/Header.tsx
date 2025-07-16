@@ -173,7 +173,7 @@ export default function Header() {
                     placeholder="검색..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white transition-all duration-200"
+                    className="block w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:border-black focus:bg-white transition-all duration-200"
                     aria-label="검색어 입력"
                   />
                 </div>
@@ -263,7 +263,7 @@ export default function Header() {
                     placeholder="검색어를 입력하세요..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg bg-gray-50 leading-5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white text-base font-light transition-all duration-200"
+                    className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg bg-gray-50 leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-black focus:bg-white text-base font-light transition-all duration-200"
                     aria-label="검색어 입력"
                   />
                 </div>
