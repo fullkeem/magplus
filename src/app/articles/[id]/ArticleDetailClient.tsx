@@ -100,7 +100,7 @@ export default function ArticleDetailClient({ article }: Props) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleShare("clipboard")}
-              className="p-2 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-2 rounded-full text-gray-500 hover:text-gray-600 transition-colors"
               title="Share"
               aria-label="공유"
             >

@@ -60,7 +60,7 @@ export default function CategoryPageClient({ category, articles }: Props) {
           <p className="text-gray-500 text-lg font-light">
             No articles found in this category yet.
           </p>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="text-gray-500 text-sm mt-2">
             Check back soon for new content!
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function CategoryPageClient({ category, articles }: Props) {
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                       <span
-                        className="text-gray-400 text-4xl"
+                        className="text-gray-500 text-4xl"
                         aria-hidden="true"
                       >
                         {getCategoryIcon(category.slug)}
@@ -111,7 +111,7 @@ export default function CategoryPageClient({ category, articles }: Props) {
                       {stripMarkdown(article.excerpt)}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span aria-label={`조회수 ${article.views || 0}회`}>
                       {article.views || 0} views
                     </span>

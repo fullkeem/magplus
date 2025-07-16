@@ -30,7 +30,7 @@ export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
       {items.map((item, index) => (
         <div key={index} className="flex items-center space-x-2">
           <ChevronRightIcon
-            className="w-4 h-4 text-gray-400"
+            className="w-4 h-4 text-gray-500"
             aria-hidden="true"
           />
           {index === items.length - 1 ? (

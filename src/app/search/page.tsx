@@ -81,7 +81,7 @@ export default async function SearchPage({ searchParams }: Props) {
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-500 text-sm">
                             No Image
                           </span>
                         </div>
@@ -133,7 +133,7 @@ export default async function SearchPage({ searchParams }: Props) {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
+            <div className="text-gray-500 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-light text-gray-900 mb-2">
               검색 결과가 없습니다
             </h3>

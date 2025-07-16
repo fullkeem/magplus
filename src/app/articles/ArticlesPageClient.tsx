@@ -222,7 +222,7 @@ export default function ArticlesPageClient() {
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-500 text-sm">
                             No Image
                           </span>
                         </div>
@@ -275,7 +275,7 @@ export default function ArticlesPageClient() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="text-gray-400 text-lg mb-4">
+            <div className="text-gray-500 text-lg mb-4">
               검색 결과가 없습니다
             </div>
             <p className="text-gray-500 text-sm">
