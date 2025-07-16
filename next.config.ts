@@ -20,8 +20,7 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // 외부 이미지 도메인 허용 (호환성을 위해 다른 형식도 추가)
-    domains: ["images.unsplash.com", "unsplash.com", "picsum.photos"],
+    // remotePatterns만 사용 (domains는 deprecated)
     remotePatterns: [
       {
         protocol: "https",

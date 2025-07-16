@@ -1,18 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  HeartIcon,
-  ShareIcon,
-  BookmarkIcon,
-  EyeIcon,
-} from "@heroicons/react/24/outline";
-import {
-  HeartIcon as HeartIconSolid,
-  BookmarkIcon as BookmarkIconSolid,
-} from "@heroicons/react/24/solid";
+import { ShareIcon, EyeIcon } from "@heroicons/react/24/outline";
 import Breadcrumb from "@/components/common/Breadcrumb";
-import { incrementViews, incrementLikes } from "@/lib/supabase/articles";
+import { incrementViews } from "@/lib/supabase/articles";
 import { recordShare } from "@/lib/supabase/shares";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
@@ -25,9 +16,6 @@ interface Props {
 }
 
 export default function ArticleDetailClient({ article }: Props) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(article.likes || 0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -59,23 +47,6 @@ export default function ArticleDetailClient({ article }: Props) {
     } catch (error) {
       console.log("Share cancelled or failed:", error);
     }
-  };
-
-  const handleLike = async () => {
-    try {
-      if (!isLiked) {
-        await incrementLikes(article.id);
-        setLikeCount((prev) => prev + 1);
-        setIsLiked(true);
-      }
-    } catch (error) {
-      console.error("Error liking article:", error);
-    }
-  };
-
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // 실제로는 로컬 스토리지나 사용자 데이터에 저장
   };
 
   return (
@@ -118,10 +89,6 @@ export default function ArticleDetailClient({ article }: Props) {
               <EyeIcon className="h-4 w-4" />
               <span>{(article.views || 0) + 1} views</span>
             </div>
-            <div className="flex items-center gap-1">
-              <HeartIcon className="h-4 w-4" />
-              <span>{likeCount} likes</span>
-            </div>
             {article.published_at && (
               <time dateTime={article.published_at}>
                 {new Date(article.published_at).toLocaleDateString("ko-KR")}
@@ -129,42 +96,8 @@ export default function ArticleDetailClient({ article }: Props) {
             )}
           </div>
 
-          {/* 액션 버튼들 */}
+          {/* 공유 버튼 */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleLike}
-              className={`p-2 rounded-full transition-colors ${
-                isLiked
-                  ? "text-red-500 hover:text-red-600"
-                  : "text-gray-400 hover:text-red-500"
-              }`}
-              title="Like"
-              aria-label={`좋아요 ${likeCount}개`}
-            >
-              {isLiked ? (
-                <HeartIconSolid className="h-5 w-5" />
-              ) : (
-                <HeartIcon className="h-5 w-5" />
-              )}
-            </button>
-
-            <button
-              onClick={handleBookmark}
-              className={`p-2 rounded-full transition-colors ${
-                isBookmarked
-                  ? "text-blue-500 hover:text-blue-600"
-                  : "text-gray-400 hover:text-blue-500"
-              }`}
-              title="Bookmark"
-              aria-label="북마크"
-            >
-              {isBookmarked ? (
-                <BookmarkIconSolid className="h-5 w-5" />
-              ) : (
-                <BookmarkIcon className="h-5 w-5" />
-              )}
-            </button>
-
             <button
               onClick={() => handleShare("clipboard")}
               className="p-2 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
@@ -305,23 +238,6 @@ export default function ArticleDetailClient({ article }: Props) {
       <div className="mt-16 pt-8 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                isLiked
-                  ? "bg-red-50 text-red-600"
-                  : "bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600"
-              }`}
-              aria-label={`좋아요 ${likeCount}개`}
-            >
-              {isLiked ? (
-                <HeartIconSolid className="h-5 w-5" />
-              ) : (
-                <HeartIcon className="h-5 w-5" />
-              )}
-              <span>{likeCount}</span>
-            </button>
-
             <button
               onClick={() => handleShare("clipboard")}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
