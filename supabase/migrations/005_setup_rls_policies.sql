@@ -1,7 +1,6 @@
 -- RLS(Row Level Security) 활성화
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shares ENABLE ROW LEVEL SECURITY;
 
 -- Categories 테이블 정책
@@ -22,19 +21,6 @@ CREATE POLICY "Anyone can update article views" ON articles
   FOR UPDATE USING (true)
   WITH CHECK (true);
 
--- Subscriptions 테이블 정책
--- 구독자는 본인의 구독 정보만 조회 가능 (토큰 기반)
--- 실제 검증은 애플리케이션 레벨에서 처리
-
--- 모든 사용자가 구독 신청 가능
-CREATE POLICY "Anyone can subscribe" ON subscriptions
-  FOR INSERT WITH CHECK (true);
-
--- 구독자 본인만 구독 정보 수정 가능 (토큰 검증은 앱 레벨)
-CREATE POLICY "Users can update own subscription" ON subscriptions
-  FOR UPDATE USING (true)
-  WITH CHECK (true);
-
 -- Shares 테이블 정책
 -- 모든 사용자가 공유 통계 읽기 가능
 CREATE POLICY "Share stats are publicly readable" ON shares
@@ -52,8 +38,6 @@ GRANT SELECT ON articles TO anon;
 GRANT UPDATE(views) ON articles TO anon; -- 조회수 업데이트만 허용
 GRANT SELECT ON shares TO anon;
 GRANT INSERT ON shares TO anon;
-GRANT INSERT ON subscriptions TO anon;
-GRANT UPDATE ON subscriptions TO anon;
 
 -- 집계 뷰에 대한 권한
 GRANT SELECT ON article_share_stats TO anon;

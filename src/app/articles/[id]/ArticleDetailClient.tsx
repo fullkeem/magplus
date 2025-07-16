@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShareIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { EyeIcon } from "@heroicons/react/24/outline";
 import Breadcrumb from "@/components/common/Breadcrumb";
+import ShareButton from "@/components/common/ShareButton";
 import { incrementViews } from "@/lib/supabase/articles";
-import { recordShare } from "@/lib/supabase/shares";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,30 +24,6 @@ export default function ArticleDetailClient({ article }: Props) {
     // 클라이언트 사이드 렌더링 확인
     setIsClient(true);
   }, [article.id]);
-
-  const handleShare = async (platform: string = "clipboard") => {
-    try {
-      // 공유 통계 기록
-      await recordShare({
-        article_id: article.id,
-        platform: platform as any,
-      });
-
-      if (navigator.share && platform === "native") {
-        await navigator.share({
-          title: article.title,
-          text: article.excerpt || article.title,
-          url: window.location.href,
-        });
-      } else {
-        // 폴백: 클립보드에 복사
-        await navigator.clipboard.writeText(window.location.href);
-        alert("링크가 클립보드에 복사되었습니다!");
-      }
-    } catch (error) {
-      console.log("Share cancelled or failed:", error);
-    }
-  };
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -98,14 +74,14 @@ export default function ArticleDetailClient({ article }: Props) {
 
           {/* 공유 버튼 */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleShare("clipboard")}
-              className="p-2 rounded-full text-gray-500 hover:text-gray-600 transition-colors"
-              title="Share"
-              aria-label="공유"
-            >
-              <ShareIcon className="h-5 w-5" />
-            </button>
+            <ShareButton
+              articleId={article.id}
+              title={article.title}
+              excerpt={article.excerpt || undefined}
+              variant="ghost"
+              size="sm"
+              showLabel={false}
+            />
           </div>
         </div>
       </header>
@@ -238,14 +214,14 @@ export default function ArticleDetailClient({ article }: Props) {
       <div className="mt-16 pt-8 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => handleShare("clipboard")}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
-              aria-label="공유"
-            >
-              <ShareIcon className="h-5 w-5" />
-              <span>Share</span>
-            </button>
+            <ShareButton
+              articleId={article.id}
+              title={article.title}
+              excerpt={article.excerpt || undefined}
+              variant="secondary"
+              size="md"
+              showLabel={true}
+            />
           </div>
 
           <Link

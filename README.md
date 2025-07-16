@@ -126,21 +126,17 @@ pnpm start
 
 - **filters**: 필터링 및 검색 상태
 - **ui**: 모달, 로딩, 테마 등 UI 상태
-- **subscription**: 구독, 북마크, 읽기 기록 관리
 
 ### 사용 예시
 
 ```typescript
-import { useFilters, useUI, useSubscription } from '@/hooks/useStores';
+import { useFilters, useUI } from '@/hooks/useStores';
 
 // 필터링 상태 사용
 const { selectedCategory, setCategory } = useFilters();
 
 // UI 상태 사용
 const { isMenuOpen, toggleMenu } = useUI();
-
-// 구독 상태 사용
-const { isSubscribed, subscribe } = useSubscription();
 ```
 
 ## 🎨 디자인 시스템

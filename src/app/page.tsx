@@ -4,7 +4,6 @@ import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
-import SubscriptionForm from "@/components/common/SubscriptionForm";
 
 export const metadata: Metadata = {
   title: "MAG+ | MZ세대를 위한 핫플레이스 웹매거진",
@@ -429,32 +428,6 @@ export default async function HomePage() {
             </div>
           </section>
         )}
-
-        {/* 구독 섹션 */}
-        <section
-          id="newsletter"
-          className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-50"
-          role="region"
-          aria-labelledby="newsletter-heading"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="mb-6 sm:mb-8 md:mb-12">
-              <h2
-                id="newsletter-heading"
-                className="text-xl sm:text-2xl md:text-3xl font-light text-black mb-2 tracking-wide"
-              >
-                Stay Updated
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 font-light max-w-2xl mx-auto">
-                매주 새로운 아티클과 큐레이션된 콘텐츠를 이메일로 받아보세요.
-              </p>
-            </div>
-
-            <div className="max-w-md mx-auto">
-              <SubscriptionForm />
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getArticles } from "@/lib/supabase/articles";
+import { getAllArticles } from "@/lib/supabase/articles";
 import { getCategories } from "@/lib/supabase/categories";
 import { CATEGORIES } from "@/constants/categories";
 import CategoryPageClient from "./CategoryPageClient";
@@ -74,10 +74,7 @@ export default async function CategoryPage({ params }: Props) {
       notFound();
     }
 
-    const articles = await getArticles({
-      category: category.id,
-      status: "published",
-    });
+    const articles = await getAllArticles();
 
     // 구조화된 데이터 (JSON-LD)
     const structuredData = {
@@ -97,7 +94,7 @@ export default async function CategoryPage({ params }: Props) {
       mainEntity: {
         "@type": "ItemList",
         numberOfItems: articles.length,
-        itemListElement: articles.map((article, index) => ({
+        itemListElement: articles.map((article: any, index: number) => ({
           "@type": "ListItem",
           position: index + 1,
           item: {

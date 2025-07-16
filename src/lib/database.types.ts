@@ -156,45 +156,6 @@ export type Database = {
           }
         ];
       };
-      subscriptions: {
-        Row: {
-          created_at: string | null;
-          email: string;
-          is_active: boolean | null;
-          is_verified: boolean | null;
-          subscribed_at: string | null;
-          subscribed_categories: string[] | null;
-          unsubscribed_at: string | null;
-          updated_at: string | null;
-          verification_token: string | null;
-          verified_at: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          email: string;
-          is_active?: boolean | null;
-          is_verified?: boolean | null;
-          subscribed_at?: string | null;
-          subscribed_categories?: string[] | null;
-          unsubscribed_at?: string | null;
-          updated_at?: string | null;
-          verification_token?: string | null;
-          verified_at?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          email?: string;
-          is_active?: boolean | null;
-          is_verified?: boolean | null;
-          subscribed_at?: string | null;
-          subscribed_categories?: string[] | null;
-          unsubscribed_at?: string | null;
-          updated_at?: string | null;
-          verification_token?: string | null;
-          verified_at?: string | null;
-        };
-        Relationships: [];
-      };
     };
     Views: {
       article_share_stats: {
@@ -372,19 +333,16 @@ export const Constants = {
 // 추가 타입 정의들
 export type Article = Tables<"articles">;
 export type Category = Tables<"categories">;
-export type Subscription = Tables<"subscriptions">;
 export type Share = Tables<"shares">;
 
 // Insert 타입들
 export type ArticleInsert = TablesInsert<"articles">;
 export type CategoryInsert = TablesInsert<"categories">;
-export type SubscriptionInsert = TablesInsert<"subscriptions">;
 export type ShareInsert = TablesInsert<"shares">;
 
 // Update 타입들
 export type ArticleUpdate = TablesUpdate<"articles">;
 export type CategoryUpdate = TablesUpdate<"categories">;
-export type SubscriptionUpdate = TablesUpdate<"subscriptions">;
 export type ShareUpdate = TablesUpdate<"shares">;
 
 // 조인된 타입들

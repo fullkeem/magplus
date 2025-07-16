@@ -24,11 +24,6 @@ export default function Header() {
     }
   };
 
-  const handleSubscribe = () => {
-    showSuccess("구독 페이지로 이동합니다");
-    window.location.href = "/subscription";
-  };
-
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -169,7 +164,7 @@ export default function Header() {
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <MagnifyingGlassIcon
-                      className="h-4 w-4 text-gray-500"
+                      className="h-4 w-4 text-gray-400"
                       aria-hidden="true"
                     />
                   </div>
@@ -183,15 +178,6 @@ export default function Header() {
                   />
                 </div>
               </form>
-
-              {/* 구독 버튼 */}
-              <button
-                onClick={handleSubscribe}
-                className="flex items-center justify-center px-6 py-2 border-2 border-black text-sm font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-300 rounded-lg"
-                aria-label="뉴스레터 구독하기"
-              >
-                SUBSCRIBE
-              </button>
             </div>
 
             {/* 모바일 햄버거 메뉴 버튼 */}
@@ -268,7 +254,7 @@ export default function Header() {
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <MagnifyingGlassIcon
-                      className="h-5 w-5 text-gray-500"
+                      className="h-5 w-5 text-gray-400"
                       aria-hidden="true"
                     />
                   </div>
@@ -332,18 +318,6 @@ export default function Header() {
             </div>
 
             {/* 구독 버튼 */}
-            <div className="pt-6">
-              <button
-                onClick={() => {
-                  handleSubscribe();
-                  closeMobileMenu();
-                }}
-                className="w-full flex items-center justify-center px-8 py-4 border-2 border-black text-lg font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-300 rounded-lg"
-                aria-label="뉴스레터 구독하기"
-              >
-                SUBSCRIBE
-              </button>
-            </div>
 
             {/* 추가 여백 */}
             <div className="h-20"></div>

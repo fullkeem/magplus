@@ -7,7 +7,7 @@ MAG+ 웹매거진의 Zustand 상태 관리 사용법입니다.
 ### 스토어 사용하기
 
 ```typescript
-import { useFilters, useUI, useSubscription } from '@/hooks/useStores'
+import { useFilters, useUI } from '@/hooks/useStores'
 
 function MyComponent() {
   // 필터링
@@ -15,9 +15,6 @@ function MyComponent() {
 
   // UI 상태
   const { showSuccess, showError } = useUI()
-
-  // 구독 관리
-  const { isSubscribed, subscribe } = useSubscription()
 
   return <div>...</div>
 }
@@ -56,22 +53,6 @@ const {
 } = useUI()
 ```
 
-### 3. 구독 스토어 (`useSubscription`)
-
-이메일 구독 및 북마크 관리
-
-```typescript
-const {
-  isSubscribed,       // 구독 상태
-  email,              // 구독 이메일
-  bookmarkedArticles, // 북마크한 아티클들
-  subscribe,          // 구독하기
-  unsubscribe,        // 구독 해지
-  addBookmark,        // 북마크 추가
-  removeBookmark      // 북마크 제거
-} = useSubscription()
-```
-
 ## 💡 주요 사용 예제
 
 ### 카테고리 필터
@@ -86,54 +67,6 @@ function CategoryFilter() {
       <option value="cafe">카페</option>
       <option value="restaurant">레스토랑</option>
     </select>
-  )
-}
-```
-
-### 구독 버튼
-
-```typescript
-function SubscribeButton() {
-  const { isSubscribed, subscribe } = useSubscription()
-  const { showSuccess, showError } = useUI()
-
-  const handleSubscribe = async () => {
-    try {
-      await subscribe('user@example.com')
-      showSuccess('구독 완료!')
-    } catch (error) {
-      showError('구독 실패')
-    }
-  }
-
-  return (
-    <button onClick={handleSubscribe}>
-      {isSubscribed ? '구독 중' : '구독하기'}
-    </button>
-  )
-}
-```
-
-### 북마크 버튼
-
-```typescript
-function BookmarkButton({ articleId }: { articleId: string }) {
-  const { bookmarkedArticles, addBookmark, removeBookmark } = useSubscription()
-
-  const isBookmarked = bookmarkedArticles.includes(articleId)
-
-  const toggle = () => {
-    if (isBookmarked) {
-      removeBookmark(articleId)
-    } else {
-      addBookmark(articleId)
-    }
-  }
-
-  return (
-    <button onClick={toggle}>
-      {isBookmarked ? '★' : '☆'}
-    </button>
   )
 }
 ```
@@ -159,18 +92,6 @@ function MyForm() {
 
 ## 🔧 편의 훅들
 
-### 북마크 관리
-
-```typescript
-import { useBookmarks } from '@/hooks/useStores'
-
-const { isBookmarked, toggleBookmark } = useBookmarks()
-
-// 사용법
-const bookmarked = isBookmarked('article-123')
-toggleBookmark('article-123')
-```
-
 ### 토스트 알림
 
 ```typescript
@@ -184,20 +105,10 @@ const { toasts, removeToast } = useToasts()
 ))}
 ```
 
-## 💾 자동 저장
-
-구독 정보와 북마크는 브라우저에 자동으로 저장됩니다:
-
-- 구독 상태
-- 이메일 주소
-- 북마크한 아티클 목록
-- 읽은 아티클 기록
-
 ## 🎯 핵심 포인트
 
-1. **간단한 사용법**: `useFilters()`, `useUI()`, `useSubscription()` 세 개의 메인 훅만 기억
-2. **자동 저장**: 중요한 데이터는 자동으로 로컬에 저장
-3. **타입 안전**: TypeScript로 모든 상태와 액션이 타입 체크됨
-4. **편의 기능**: 자주 쓰는 패턴은 별도 훅으로 제공
+1. **간단한 사용법**: `useFilters()`, `useUI()` 두 개의 메인 훅만 기억
+2. **타입 안전**: TypeScript로 모든 상태와 액션이 타입 체크됨
+3. **편의 기능**: 자주 쓰는 패턴은 별도 훅으로 제공
 
 이제 더 간단하게 Zustand를 사용할 수 있습니다! 🎉
