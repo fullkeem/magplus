@@ -1,14 +1,22 @@
-# MAG+ 웹매거진 API 명세서
+# API 명세서
+
+## 개요
+
+MAG+ 웹매거진의 RESTful API 명세서입니다. 모든 API는 공개 접근을 기본으로 하며, 관리자 기능만 API Key 인증을 요구합니다.
+
+## 기본 정보
+
+- **Base URL**: `https://mag-plus.vercel.app/api`
+- **Content-Type**: `application/json`
+- **인증**: 공개 API (관리자 API만 API Key 필요)
 
 ## Articles API
 
-| 엔드포인트 URL       | HTTP 메서드 | 요청 파라미터                                      | 요청 예시                                                       | 응답 구조                                           |
-| -------------------- | ----------- | -------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
-| `/api/articles`      | GET         | `page`, `limit`, `category`, `region`              | `GET /api/articles?page=1&limit=10&category=cafe`               | `{ data: [articles], count: number, page: number }` |
-| `/api/articles/{id}` | GET         | `id` (path)                                        | `GET /api/articles/123`                                         | `{ data: article, views: number }`                  |
-| `/api/articles`      | POST        | `title`, `content`, `category`, `region`, `images` | `POST /api/articles` body: `{ title: "제목", content: "내용" }` | `{ data: article, id: string }`                     |
-| `/api/articles/{id}` | PUT         | `id` (path), `title`, `content`, `category`        | `PUT /api/articles/123` body: `{ title: "수정된 제목" }`        | `{ data: article, updated_at: string }`             |
-| `/api/articles/{id}` | DELETE      | `id` (path)                                        | `DELETE /api/articles/123`                                      | `{ success: true, message: string }`                |
+| 엔드포인트 URL             | HTTP 메서드 | 요청 파라미터                                 | 요청 예시                                         | 응답 구조                                           |
+| -------------------------- | ----------- | --------------------------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| `/api/articles`            | GET         | `page`, `limit`, `category`, `region`, `sort` | `GET /api/articles?page=1&limit=10&category=cafe` | `{ data: [articles], count: number, page: number }` |
+| `/api/articles/{id}`       | GET         | `id` (path)                                   | `GET /api/articles/123`                           | `{ data: article, related: [articles] }`            |
+| `/api/articles/{id}/views` | POST        | `id` (path)                                   | `POST /api/articles/123/views`                    | `{ success: true, views: number }`                  |
 
 ## Categories API
 
@@ -23,28 +31,31 @@
 | -------------- | ----------- | ------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------- |
 | `/api/search`  | GET         | `q`, `category`, `region`, `page`, `limit` | `GET /api/search?q=카페&category=cafe&region=서울` | `{ data: [articles], count: number, query: string }` |
 
-## Subscriptions API
-
-| 엔드포인트 URL            | HTTP 메서드 | 요청 파라미터         | 요청 예시                                                       | 응답 구조                                    |
-| ------------------------- | ----------- | --------------------- | --------------------------------------------------------------- | -------------------------------------------- |
-| `/api/subscriptions`      | POST        | `email`, `categories` | `POST /api/subscriptions` body: `{ email: "user@example.com" }` | `{ success: true, subscription_id: string }` |
-| `/api/subscriptions/{id}` | DELETE      | `id` (path)           | `DELETE /api/subscriptions/123`                                 | `{ success: true, message: string }`         |
-
 ## Share API
 
-| 엔드포인트 URL | HTTP 메서드 | 요청 파라미터            | 요청 예시                                                             | 응답 구조                              |
-| -------------- | ----------- | ------------------------ | --------------------------------------------------------------------- | -------------------------------------- |
-| `/api/share`   | POST        | `article_id`, `platform` | `POST /api/share` body: `{ article_id: "123", platform: "facebook" }` | `{ success: true, share_url: string }` |
+| 엔드포인트 URL | HTTP 메서드 | 요청 파라미터            | 요청 예시                                                             | 응답 구조                                |
+| -------------- | ----------- | ------------------------ | --------------------------------------------------------------------- | ---------------------------------------- |
+| `/api/share`   | POST        | `article_id`, `platform` | `POST /api/share` body: `{ article_id: "123", platform: "facebook" }` | `{ success: true, share_count: number }` |
 
-## 공통 응답 구조
+## Admin API (API Key 필요)
+
+| 엔드포인트 URL             | HTTP 메서드 | 요청 파라미터                               | 요청 예시                        | 응답 구조                               |
+| -------------------------- | ----------- | ------------------------------------------- | -------------------------------- | --------------------------------------- |
+| `/api/admin/articles`      | POST        | `title`, `content`, `category_id`, `region` | `POST /api/admin/articles`       | `{ success: true, article_id: string }` |
+| `/api/admin/articles/{id}` | PUT         | `id` (path), article data                   | `PUT /api/admin/articles/123`    | `{ success: true, message: string }`    |
+| `/api/admin/articles/{id}` | DELETE      | `id` (path)                                 | `DELETE /api/admin/articles/123` | `{ success: true, message: string }`    |
+
+## 응답 형식
 
 ### 성공 응답
 
 ```json
 {
-  "data": {},
   "success": true,
-  "message": "Success"
+  "data": [...],
+  "count": 10,
+  "page": 1,
+  "total_pages": 5
 }
 ```
 
@@ -52,14 +63,210 @@
 
 ```json
 {
-  "error": "Error message",
   "success": false,
-  "code": "ERROR_CODE"
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "잘못된 요청 파라미터입니다.",
+    "details": {
+      "field": "category",
+      "reason": "존재하지 않는 카테고리입니다."
+    }
+  }
 }
 ```
 
-description:
-globs:
-alwaysApply: false
+## 데이터 모델
+
+### Article
+
+```typescript
+interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  images: string[];
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  region: string;
+  views: number;
+  likes: number;
+  status: 'draft' | 'published';
+  meta_title?: string;
+  meta_description?: string;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+### Category
+
+```typescript
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  article_count: number;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+### Share
+
+```typescript
+interface Share {
+  id: string;
+  article_id: string;
+  platform: 'facebook' | 'twitter' | 'kakao' | 'instagram' | 'naver' | 'clipboard';
+  share_count: number;
+  anonymous_id?: string;
+  shared_at: string;
+}
+```
+
+## 에러 코드
+
+| 코드                  | 메시지                | 설명                          |
+| --------------------- | --------------------- | ----------------------------- |
+| `VALIDATION_ERROR`    | 유효성 검사 실패      | 요청 파라미터가 올바르지 않음 |
+| `NOT_FOUND`           | 리소스를 찾을 수 없음 | 요청한 리소스가 존재하지 않음 |
+| `UNAUTHORIZED`        | 인증 실패             | API Key가 필요하거나 잘못됨   |
+| `RATE_LIMIT_EXCEEDED` | 요청 한도 초과        | 너무 많은 요청이 발생함       |
+| `INTERNAL_ERROR`      | 서버 내부 오류        | 서버에서 처리 중 오류 발생    |
+
+## 페이지네이션
+
+모든 목록 API는 페이지네이션을 지원합니다:
+
+```
+GET /api/articles?page=1&limit=10
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "total_pages": 10,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+## 필터링 및 정렬
+
+### 필터링 옵션
+
+- `category`: 카테고리 슬러그로 필터링
+- `region`: 지역명으로 필터링
+- `status`: 발행 상태로 필터링 (관리자만)
+
+### 정렬 옵션
+
+- `latest`: 최신순 (기본값)
+- `popular`: 인기순 (조회수 기준)
+- `views`: 조회수 순
+- `likes`: 좋아요 순
+
+```
+GET /api/articles?category=cafe&region=서울&sort=popular
+```
+
+## 검색 기능
+
+전체 텍스트 검색을 지원합니다:
+
+```
+GET /api/search?q=강남%20카페&category=cafe
+```
+
+**검색 범위:**
+
+- 아티클 제목
+- 아티클 내용
+- 아티클 요약
+- 카테고리 이름
+- 지역 정보
+
+## 레이트 리미팅
+
+| API 유형   | 제한      | 시간 단위 |
+| ---------- | --------- | --------- |
+| 공개 API   | 100 요청  | 1분       |
+| 검색 API   | 30 요청   | 1분       |
+| 공유 API   | 10 요청   | 1분       |
+| 관리자 API | 1000 요청 | 1시간     |
+
+## 캐싱
+
+| 엔드포인트           | 캐시 시간 | 조건            |
+| -------------------- | --------- | --------------- |
+| `/api/articles`      | 5분       | 공개 아티클만   |
+| `/api/categories`    | 30분      | 활성 카테고리만 |
+| `/api/articles/{id}` | 10분      | 발행된 아티클만 |
+
+## 예시 요청
+
+### 아티클 목록 조회
+
+```bash
+curl -X GET "https://mag-plus.vercel.app/api/articles?page=1&limit=5&category=cafe&region=서울&sort=popular" \
+  -H "Content-Type: application/json"
+```
+
+### 아티클 상세 조회
+
+```bash
+curl -X GET "https://mag-plus.vercel.app/api/articles/123" \
+  -H "Content-Type: application/json"
+```
+
+### 검색 요청
+
+```bash
+curl -X GET "https://mag-plus.vercel.app/api/search?q=강남%20카페&category=cafe" \
+  -H "Content-Type: application/json"
+```
+
+### 공유 기록
+
+```bash
+curl -X POST "https://mag-plus.vercel.app/api/share" \
+  -H "Content-Type: application/json" \
+  -d '{"article_id": "123", "platform": "facebook"}'
+```
+
+### 관리자 아티클 생성
+
+```bash
+curl -X POST "https://mag-plus.vercel.app/api/admin/articles" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "title": "새로운 핫플레이스 카페",
+    "content": "...",
+    "category_id": "cafe-123",
+    "region": "서울"
+  }'
+```
 
 ---
+
+**마지막 업데이트**: 2024년 1월
+**담당자**: 개발팀
+**검토 주기**: 월 1회
