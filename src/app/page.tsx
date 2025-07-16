@@ -1,20 +1,69 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowRightIcon } from "@heroicons/react/24/outline";
-import { CATEGORIES, type CategoryId } from "@/constants/categories";
-import { useFilters } from "@/hooks/useStores";
-import SubscriptionForm from "@/components/common/SubscriptionForm";
-import { getArticles } from "@/lib/supabase/articles";
+import type { Metadata } from "next";
+import { getAllArticles } from "@/lib/supabase/articles";
 import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { stripMarkdown } from "@/utils/markdown";
+import Link from "next/link";
+import Image from "next/image";
+import SubscriptionForm from "@/components/common/SubscriptionForm";
 
-export default function HomePage() {
-  const { setCategory } = useFilters();
+export const metadata: Metadata = {
+  title: "MAG+ | MZ세대를 위한 핫플레이스 웹매거진",
+  description:
+    "서울의 숨겨진 보석들을 발견하는 프리미엄 라이프스타일 매거진. 트렌디한 카페부터 숨겨진 갤러리까지, 도시의 새로운 문화를 선도하는 공간들의 이야기",
+  keywords: [
+    "핫플레이스",
+    "카페",
+    "맛집",
+    "팝업스토어",
+    "문화공간",
+    "MZ세대",
+    "웹매거진",
+    "서울",
+    "라이프스타일",
+  ],
+  authors: [{ name: "MAG+ Team" }],
+  openGraph: {
+    title: "MAG+ | MZ세대를 위한 핫플레이스 웹매거진",
+    description: "서울의 숨겨진 보석들을 발견하는 프리미엄 라이프스타일 매거진",
+    type: "website",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MAG+ | MZ세대를 위한 핫플레이스 웹매거진",
+    description: "서울의 숨겨진 보석들을 발견하는 프리미엄 라이프스타일 매거진",
+  },
+  alternates: {
+    canonical: "/",
+  },
+};
+
+export default async function HomePage() {
+  // 서버에서 데이터 로딩
+  const [articles, categories] = await Promise.all([
+    getAllArticles(),
+    getCategories(),
+  ]);
+
+  // 카테고리 중복 제거 및 필터링
+  const uniqueCategories = categories.filter(
+    (category, index, self) =>
+      index === self.findIndex((c) => c.name === category.name)
+  );
+
+  // 최신 아티클 (최대 6개)
+  const latestArticles = articles
+    .sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 6);
+
+  // 인기 아티클 (조회수 기준, 최대 3개)
+  const popularArticles = articles
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
+    .slice(0, 3);
 
   // 구조화된 데이터 (JSON-LD)
   const structuredData = {
@@ -22,7 +71,7 @@ export default function HomePage() {
     "@type": "WebSite",
     name: "MAG+",
     description: "MZ세대를 위한 핫플레이스 웹매거진",
-    url: process.env.NEXT_PUBLIC_BASE_URL || "https://mag-plus.com",
+    url: "/",
     publisher: {
       "@type": "Organization",
       name: "MAG+",
@@ -33,60 +82,9 @@ export default function HomePage() {
     },
     potentialAction: {
       "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${
-          process.env.NEXT_PUBLIC_BASE_URL || "https://mag-plus.com"
-        }/search?q={search_term_string}`,
-      },
+      target: "/search?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
-  };
-  const [latestArticles, setLatestArticles] = useState<ArticleWithCategory[]>(
-    []
-  );
-  const [popularArticles, setPopularArticles] = useState<ArticleWithCategory[]>(
-    []
-  );
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const [categoriesData, latestData, popularData] = await Promise.all([
-        getCategories(),
-        getArticles({ limit: 6, orderBy: "created_at" }),
-        getArticles({ limit: 6, orderBy: "views" }),
-      ]);
-
-      setCategories(categoriesData);
-      setLatestArticles(latestData);
-      setPopularArticles(popularData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCategoryClick = (categoryId: CategoryId) => {
-    setCategory(categoryId);
-  };
-
-  const getCategoryIcon = (slug: string) => {
-    const categoryMap: Record<string, string> = {
-      cafe: "☕",
-      restaurant: "🍽️",
-      popup: "🏪",
-      culture: "🎭",
-      shopping: "🛍️",
-      exhibition: "🎨",
-    };
-    return categoryMap[slug] || "📍";
   };
 
   return (
@@ -97,75 +95,81 @@ export default function HomePage() {
           __html: JSON.stringify(structuredData),
         }}
       />
-      <div className="bg-white">
-        {/* 히어로 섹션 - 모바일 간격 최적화 */}
-        <section className="relative bg-white" role="banner">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-8 sm:pb-12 md:pt-12 md:pb-16 lg:pt-16 lg:pb-20">
+      <div className="min-h-screen bg-white">
+        {/* 히어로 섹션 */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]"></div>
+          </div>
+
+          <div className="relative max-w-6xl mx-auto px-6 py-32 lg:py-40">
             <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-black mb-4 sm:mb-6 md:mb-8 tracking-tight leading-tight">
-                Discover Seoul's
-                <br />
-                <span className="italic">Hidden Gems</span>
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 md:mb-10 lg:mb-12 max-w-3xl mx-auto font-light leading-relaxed px-2">
-                서울의 가장 흥미로운 카페, 레스토랑, 팝업스토어, 문화공간을
-                큐레이션하여 매주 업데이트합니다.
+              <div className="mb-12">
+                <h1 className="text-7xl md:text-8xl lg:text-9xl font-extralight text-white mb-6 tracking-[0.02em] leading-none">
+                  MAG
+                  <span className="relative">
+                    <span className="text-white">+</span>
+                    <div className="absolute -top-3 -right-3 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  </span>
+                </h1>
+                <div className="w-16 h-px bg-white mx-auto opacity-40"></div>
+              </div>
+
+              <p className="text-xl md:text-2xl text-gray-200 font-light mb-8 max-w-2xl mx-auto leading-relaxed">
+                서울의 숨겨진 보석들을 발견하는 프리미엄 라이프스타일 매거진
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md sm:max-w-none mx-auto px-4">
+
+              <p className="text-base text-gray-300 mb-16 max-w-xl mx-auto leading-relaxed">
+                트렌디한 카페부터 숨겨진 갤러리까지, 도시의 새로운 문화를
+                선도하는 공간들의 이야기
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link
                   href="/articles"
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 border border-black text-sm sm:text-base font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 min-h-[48px]"
-                  aria-label="모든 기사 보기"
+                  className="group inline-flex items-center px-10 py-4 bg-white text-black rounded-full hover:bg-gray-50 transition-all duration-300 font-medium text-sm tracking-wide"
                 >
-                  Explore Articles
-                  <ArrowRightIcon className="ml-2 h-4 w-4" aria-hidden="true" />
+                  아티클 탐색하기
                 </Link>
+
                 <Link
-                  href="/subscribe"
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-light tracking-wide text-gray-600 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 min-h-[48px]"
-                  aria-label="뉴스레터 구독하기"
+                  href="/categories"
+                  className="group inline-flex items-center px-10 py-4 border border-white/20 text-white rounded-full hover:bg-white/5 transition-all duration-300 font-medium text-sm tracking-wide backdrop-blur-sm"
                 >
-                  Subscribe to Newsletter
+                  카테고리 둘러보기
                 </Link>
               </div>
             </div>
           </div>
+
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1200 120" className="w-full h-16 fill-white">
+              <path d="M0,60 C300,120 900,0 1200,60 L1200,120 L0,120 Z"></path>
+            </svg>
+          </div>
         </section>
 
         {/* 카테고리 섹션 */}
-        <section
-          className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-50"
-          role="region"
-          aria-labelledby="categories-heading"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-6 sm:mb-8 md:mb-12">
-              <h2
-                id="categories-heading"
-                className="text-xl sm:text-2xl md:text-3xl font-light text-black mb-3 sm:mb-4 tracking-wide"
-              >
-                Categories
+        <section className="py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl font-extralight text-black mb-8 tracking-wide">
+                카테고리
               </h2>
-              <p className="text-sm sm:text-base text-gray-600 font-light">
-                관심 있는 카테고리를 탐색해보세요
+              <p className="text-lg text-gray-600 font-light max-w-xl mx-auto leading-relaxed">
+                관심 있는 분야를 선택해서 더 깊이 있는 이야기를 만나보세요
               </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-              {CATEGORIES.map((category) => (
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+              {uniqueCategories.map((category, index) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  onClick={() => handleCategoryClick(category.id)}
-                  className="group bg-white p-3 sm:p-4 md:p-6 text-center hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 min-h-[100px] sm:min-h-[120px] md:min-h-[140px] flex flex-col justify-center items-center"
-                  aria-label={`${category.name} 카테고리 보기`}
+                  className="group block text-center p-8 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all duration-300"
                 >
-                  <div
-                    className="text-xl sm:text-2xl md:text-3xl mb-2 sm:mb-3"
-                    aria-hidden="true"
-                  >
-                    {getCategoryIcon(category.slug)}
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-light text-black group-hover:text-gray-600 transition-colors tracking-wide">
+                  <h3 className="text-lg font-medium text-gray-900 group-hover:text-black transition-colors">
                     {category.name}
                   </h3>
                 </Link>
@@ -174,272 +178,192 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 로딩 상태 */}
-        {loading && (
-          <section className="py-8 sm:py-12 md:py-16">
-            <div className="flex items-center justify-center">
-              <LoadingSpinner size="lg" />
-            </div>
-          </section>
-        )}
-
         {/* 최신 아티클 섹션 */}
-        {!loading && (
-          <section
-            className="py-8 sm:py-12 md:py-16 lg:py-20"
-            role="region"
-            aria-labelledby="latest-heading"
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 md:mb-12 gap-4">
+        {latestArticles.length > 0 && (
+          <section className="py-24 bg-gray-50">
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="flex items-end justify-between mb-16">
                 <div>
-                  <h2
-                    id="latest-heading"
-                    className="text-xl sm:text-2xl md:text-3xl font-light text-black mb-2 tracking-wide"
-                  >
-                    Latest Articles
+                  <h2 className="text-4xl md:text-5xl font-extralight text-black mb-6 tracking-wide">
+                    최신 아티클
                   </h2>
-                  <p className="text-sm sm:text-base text-gray-600 font-light">
-                    가장 최근에 발행된 아티클들을 확인해보세요
+                  <p className="text-lg text-gray-600 font-light max-w-lg leading-relaxed">
+                    방금 업데이트된 새로운 이야기들을 가장 먼저 만나보세요
                   </p>
                 </div>
                 <Link
                   href="/articles"
-                  className="inline-flex items-center text-sm font-light text-gray-600 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-sm px-2 py-1"
-                  aria-label="모든 기사 보기"
+                  className="hidden md:inline-flex items-center text-gray-700 hover:text-black transition-colors font-medium text-sm tracking-wide"
                 >
-                  View All
-                  <ArrowRightIcon className="ml-1 h-4 w-4" aria-hidden="true" />
+                  모든 아티클 보기
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {latestArticles.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    <p>아직 등록된 아티클이 없습니다.</p>
-                  </div>
-                ) : (
-                  latestArticles.map((article) => (
-                    <article
-                      key={article.id}
-                      className="group bg-white border border-gray-100 hover:shadow-lg transition-all duration-200"
-                    >
-                      <Link
-                        href={`/articles/${article.id}`}
-                        className="block focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-                        aria-label={`${article.title} 아티클 읽기`}
-                      >
-                        {article.images && article.images.length > 0 && (
-                          <div className="aspect-[4/3] overflow-hidden relative">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {latestArticles.map((article) => (
+                  <article key={article.id} className="group">
+                    <Link href={`/articles/${article.id}`}>
+                      <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-500">
+                        <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                          {article.images && article.images.length > 0 ? (
                             <Image
                               src={article.images[0]}
-                              alt={`${article.title} 대표 이미지`}
+                              alt={article.title}
                               fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-200"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-700"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
-                          </div>
-                        )}
-                        <div className="p-4 sm:p-6">
-                          <div className="flex items-center text-xs text-gray-500 mb-2 font-light">
-                            <span aria-hidden="true">
-                              {getCategoryIcon(article.category?.slug || "")}
-                            </span>
-                            <span className="ml-1">
-                              {article.category?.name}
-                            </span>
-                            <span className="mx-2" aria-hidden="true">
-                              •
-                            </span>
-                            <time dateTime={article.created_at || undefined}>
-                              {article.created_at
-                                ? new Date(
-                                    article.created_at
-                                  ).toLocaleDateString("ko-KR")
-                                : ""}
-                            </time>
-                          </div>
-                          <h3 className="text-base sm:text-lg md:text-xl font-light text-black mb-2 group-hover:text-gray-600 transition-colors tracking-wide line-clamp-2">
-                            {article.title}
-                          </h3>
-                          {article.excerpt && (
-                            <p className="text-sm text-gray-600 font-light leading-relaxed line-clamp-2">
-                              {stripMarkdown(article.excerpt)}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
-                            <div className="flex items-center space-x-3">
-                              <span
-                                aria-label={`조회수 ${article.views || 0}회`}
-                              >
-                                👁 {article.views || 0}
-                              </span>
-                              <span
-                                aria-label={`좋아요 ${article.likes || 0}개`}
-                              >
-                                ❤️ {article.likes || 0}
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              <span className="text-gray-400 text-sm font-light">
+                                이미지 준비중
                               </span>
                             </div>
+                          )}
+                        </div>
+
+                        <div className="p-8">
+                          <div className="flex items-center gap-3 text-xs text-gray-500 uppercase tracking-wider mb-4">
+                            <span className="px-3 py-1 bg-gray-100 rounded-full">
+                              {article.category?.name}
+                            </span>
                             {article.region && (
-                              <span
-                                className="truncate max-w-[120px]"
-                                title={article.region}
-                              >
-                                📍 {article.region}
+                              <span className="px-3 py-1 bg-gray-100 rounded-full">
+                                {article.region}
                               </span>
                             )}
                           </div>
+
+                          <h3 className="text-xl font-light text-black mb-4 group-hover:text-gray-700 transition-colors line-clamp-2 leading-relaxed">
+                            {article.title}
+                          </h3>
+
+                          {article.excerpt && (
+                            <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                              {article.excerpt}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>조회수 {article.views || 0}</span>
+                            <span className="font-light">
+                              {new Date(
+                                article.created_at || ""
+                              ).toLocaleDateString("ko-KR", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
                         </div>
-                      </Link>
-                    </article>
-                  ))
-                )}
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+
+              <div className="text-center mt-16 md:hidden">
+                <Link
+                  href="/articles"
+                  className="inline-flex items-center px-8 py-4 bg-black text-white rounded-full hover:bg-gray-800 transition-colors font-medium text-sm tracking-wide"
+                >
+                  모든 아티클 보기
+                </Link>
               </div>
             </div>
           </section>
         )}
 
         {/* 인기 아티클 섹션 */}
-        {!loading && (
-          <section
-            className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-50"
-            role="region"
-            aria-labelledby="popular-heading"
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 md:mb-12 gap-4">
-                <div>
-                  <h2
-                    id="popular-heading"
-                    className="text-xl sm:text-2xl md:text-3xl font-light text-black mb-2 tracking-wide"
-                  >
-                    Popular Articles
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-600 font-light">
-                    가장 많이 읽힌 인기 아티클들을 확인해보세요
-                  </p>
-                </div>
-                <Link
-                  href="/articles?sort=views"
-                  className="inline-flex items-center text-sm font-light text-gray-600 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-sm px-2 py-1"
-                  aria-label="조회수 순으로 정렬된 아티클 보기"
-                >
-                  View All
-                  <ArrowRightIcon className="ml-1 h-4 w-4" aria-hidden="true" />
-                </Link>
+        {popularArticles.length > 0 && (
+          <section className="py-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="text-center mb-20">
+                <h2 className="text-4xl md:text-5xl font-extralight text-black mb-8 tracking-wide">
+                  인기 아티클
+                </h2>
+                <p className="text-lg text-gray-600 font-light max-w-xl mx-auto leading-relaxed">
+                  가장 많은 사람들이 선택한 특별한 이야기들
+                </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {popularArticles.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    <p>아직 등록된 아티클이 없습니다.</p>
-                  </div>
-                ) : (
-                  popularArticles.map((article, index) => (
-                    <article
-                      key={article.id}
-                      className="group bg-white border border-gray-100 hover:shadow-lg transition-all duration-200 relative"
-                    >
-                      {index < 3 && (
-                        <div className="absolute top-3 left-3 z-10 bg-black text-white text-xs px-2 py-1 font-light">
-                          #{index + 1}
-                        </div>
-                      )}
-                      <Link
-                        href={`/articles/${article.id}`}
-                        className="block focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-                        aria-label={`인기 아티클 ${index + 1}위: ${
-                          article.title
-                        } 읽기`}
-                      >
-                        {article.images && article.images.length > 0 && (
-                          <div className="aspect-[4/3] overflow-hidden relative">
-                            <Image
-                              src={article.images[0]}
-                              alt={`${article.title} 대표 이미지`}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-200"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                            />
-                          </div>
-                        )}
-                        <div className="p-4 sm:p-6">
-                          <div className="flex items-center text-xs text-gray-500 mb-2 font-light">
-                            <span aria-hidden="true">
-                              {getCategoryIcon(article.category?.slug || "")}
-                            </span>
-                            <span className="ml-1">
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                {popularArticles.map((article, index) => (
+                  <article key={article.id} className="group relative">
+                    <div className="absolute -top-6 -left-6 z-10">
+                      <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-light text-lg">
+                        {index + 1}
+                      </div>
+                    </div>
+
+                    <Link href={`/articles/${article.id}`}>
+                      <div className="bg-gray-50 rounded-2xl overflow-hidden hover:bg-gray-100 transition-all duration-500 pt-8">
+                        <div className="p-8">
+                          <div className="flex items-center gap-3 text-xs text-gray-500 uppercase tracking-wider mb-4">
+                            <span className="px-3 py-1 bg-white/80 rounded-full">
                               {article.category?.name}
                             </span>
-                            <span className="mx-2" aria-hidden="true">
-                              •
-                            </span>
-                            <time dateTime={article.created_at || undefined}>
-                              {article.created_at
-                                ? new Date(
-                                    article.created_at
-                                  ).toLocaleDateString("ko-KR")
-                                : ""}
-                            </time>
-                          </div>
-                          <h3 className="text-base sm:text-lg md:text-xl font-light text-black mb-2 group-hover:text-gray-600 transition-colors tracking-wide line-clamp-2">
-                            {article.title}
-                          </h3>
-                          {article.excerpt && (
-                            <p className="text-sm text-gray-600 font-light leading-relaxed line-clamp-2">
-                              {stripMarkdown(article.excerpt)}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
-                            <div className="flex items-center space-x-3">
-                              <span
-                                aria-label={`조회수 ${article.views || 0}회`}
-                              >
-                                👁 {article.views || 0}
-                              </span>
-                              <span
-                                aria-label={`좋아요 ${article.likes || 0}개`}
-                              >
-                                ❤️ {article.likes || 0}
-                              </span>
-                            </div>
                             {article.region && (
-                              <span
-                                className="truncate max-w-[120px]"
-                                title={article.region}
-                              >
-                                📍 {article.region}
+                              <span className="px-3 py-1 bg-white/80 rounded-full">
+                                {article.region}
                               </span>
                             )}
                           </div>
+
+                          <h3 className="text-xl font-light text-black mb-4 group-hover:text-gray-700 transition-colors line-clamp-2 leading-relaxed">
+                            {article.title}
+                          </h3>
+
+                          {article.excerpt && (
+                            <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                              {article.excerpt}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>조회수 {article.views || 0}</span>
+                            <span className="font-light">
+                              {new Date(
+                                article.created_at || ""
+                              ).toLocaleDateString("ko-KR", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
                         </div>
-                      </Link>
-                    </article>
-                  ))
-                )}
+                      </div>
+                    </Link>
+                  </article>
+                ))}
               </div>
             </div>
           </section>
         )}
 
         {/* 구독 섹션 */}
-        <section
-          className="py-8 sm:py-12 md:py-16 lg:py-20"
-          role="region"
-          aria-labelledby="subscribe-heading"
-        >
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2
-              id="subscribe-heading"
-              className="text-xl sm:text-2xl md:text-3xl font-light text-black mb-4 tracking-wide"
-            >
-              Stay Updated
+        <section className="relative py-32 bg-gradient-to-r from-black via-gray-900 to-black overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
+          </div>
+
+          <div className="relative max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-4xl md:text-5xl font-extralight text-white mb-8 tracking-wide">
+              새로운 이야기를 놓치지 마세요
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 font-light mb-6 sm:mb-8 leading-relaxed max-w-2xl mx-auto">
-              매주 새로운 아티클과 큐레이션된 콘텐츠를 이메일로 받아보세요.
-              언제든지 구독을 취소할 수 있습니다.
+            <p className="text-lg text-gray-200 font-light mb-16 max-w-2xl mx-auto leading-relaxed">
+              매주 엄선된 서울의 새로운 공간들과 특별한 이야기들을 이메일로
+              받아보세요
             </p>
+
             <div className="max-w-md mx-auto">
-              <SubscriptionForm onSuccess={() => {}} />
+              <SubscriptionForm />
             </div>
+
+            <p className="text-sm text-gray-400 mt-8 font-light">
+              언제든지 구독을 해지할 수 있습니다. 스팸은 절대 보내지 않습니다.
+            </p>
           </div>
         </section>
       </div>

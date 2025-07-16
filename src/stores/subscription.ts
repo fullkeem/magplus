@@ -12,7 +12,6 @@ export interface SubscriptionState {
   };
 
   // 로컬 스토리지 기반 기능들
-  bookmarkedArticles: string[];
   readArticles: string[];
 }
 
@@ -24,18 +23,13 @@ export interface SubscriptionActions {
     preferences: Partial<SubscriptionState["preferences"]>
   ) => void;
 
-  // 북마크 관리
-  addBookmark: (articleId: string) => void;
-  removeBookmark: (articleId: string) => void;
-  clearBookmarks: () => void;
-
   // 읽기 기록 관리
   markAsRead: (articleId: string) => void;
   markAsUnread: (articleId: string) => void;
   clearReadingHistory: () => void;
 }
 
-type SubscriptionStore = SubscriptionState & SubscriptionActions;
+export type SubscriptionStore = SubscriptionState & SubscriptionActions;
 
 export const useSubscriptionStore = create<SubscriptionStore>()(
   persist(
@@ -48,7 +42,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         categoryNotifications: [],
         frequency: "weekly",
       },
-      bookmarkedArticles: [],
       readArticles: [],
 
       // Actions
@@ -72,22 +65,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           },
         })),
 
-      addBookmark: (articleId) =>
-        set((state) => ({
-          bookmarkedArticles: state.bookmarkedArticles.includes(articleId)
-            ? state.bookmarkedArticles
-            : [...state.bookmarkedArticles, articleId],
-        })),
-
-      removeBookmark: (articleId) =>
-        set((state) => ({
-          bookmarkedArticles: state.bookmarkedArticles.filter(
-            (id) => id !== articleId
-          ),
-        })),
-
-      clearBookmarks: () => set({ bookmarkedArticles: [] }),
-
       markAsRead: (articleId) =>
         set((state) => ({
           readArticles: state.readArticles.includes(articleId)
@@ -108,7 +85,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         isSubscribed: state.isSubscribed,
         email: state.email,
         preferences: state.preferences,
-        bookmarkedArticles: state.bookmarkedArticles,
         readArticles: state.readArticles,
       }),
     }
