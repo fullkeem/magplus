@@ -67,7 +67,7 @@ export default function ArticlesPageClient() {
         const showAll = !hasFilters && reset; // 첫 로딩이고 필터가 없을 때만
 
         const result = await getArticlesPaginated(page, PAGE_SIZE, {
-          categoryId: selectedCategory || undefined,
+          categorySlug: selectedCategory || undefined, // categoryId에서 categorySlug로 변경
           region: selectedRegion || undefined,
           searchQuery: searchQuery || undefined,
           sortBy,
@@ -209,7 +209,7 @@ export default function ArticlesPageClient() {
             >
               <option value="">모든 카테고리</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
+                <option key={category.id} value={category.slug}>
                   {category.name}
                 </option>
               ))}

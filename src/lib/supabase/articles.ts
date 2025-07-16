@@ -26,7 +26,7 @@ export async function getArticlesPaginated(
   page: number = 1,
   pageSize: number = 12,
   options: {
-    categoryId?: string;
+    categorySlug?: string; // categoryId에서 categorySlug로 변경
     region?: string;
     searchQuery?: string;
     sortBy?: "latest" | "popular" | "oldest";
@@ -35,7 +35,7 @@ export async function getArticlesPaginated(
 ): Promise<PaginationResult<ArticleWithCategory>> {
   try {
     const {
-      categoryId,
+      categorySlug,
       region,
       searchQuery,
       sortBy = "latest",
@@ -43,7 +43,7 @@ export async function getArticlesPaginated(
     } = options;
 
     // 필터가 없고 showAll이 true이면 모든 아티클을 보여줌
-    const hasFilters = !!(categoryId || region || searchQuery);
+    const hasFilters = !!(categorySlug || region || searchQuery);
     const shouldShowAll = showAll && !hasFilters;
 
     const from = (page - 1) * pageSize;
@@ -70,9 +70,23 @@ export async function getArticlesPaginated(
       )
       .eq("status", "published");
 
-    // 필터 적용
-    if (categoryId) {
-      query = query.eq("category_id", categoryId);
+    // 카테고리 필터 적용 (slug 기반)
+    if (categorySlug) {
+      // 먼저 카테고리 slug로 category_id를 찾음
+      const { data: categoryData, error: categoryError } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .single();
+
+      if (categoryError) {
+        console.error("Error fetching category by slug:", categoryError);
+        throw new Error("카테고리를 찾을 수 없습니다.");
+      }
+
+      if (categoryData) {
+        query = query.eq("category_id", categoryData.id);
+      }
     }
 
     if (region) {
