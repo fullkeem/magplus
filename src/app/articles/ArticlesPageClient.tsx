@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { useState, useEffect, useCallback } from "react";
 import { useFilters } from "@/hooks/useStores";
@@ -12,14 +13,16 @@ import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory, Category } from "@/lib/database.types";
 
 export default function ArticlesPageClient() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const {
     selectedCategory,
     selectedRegion,
     sortBy,
-    searchQuery,
     setCategory,
+    setRegion,
     setSortBy,
-    setSearchQuery,
     clearFilters,
   } = useFilters();
 
@@ -33,6 +36,31 @@ export default function ArticlesPageClient() {
 
   const PAGE_SIZE = 20; // 12에서 20으로 증가
 
+  // URL 업데이트 함수
+  const updateURL = useCallback(
+    (params: {
+      category?: string | null;
+      region?: string | null;
+      sort?: string | null;
+    }) => {
+      const newParams = new URLSearchParams(searchParams);
+
+      // 파라미터 업데이트
+      Object.entries(params).forEach(([key, value]) => {
+        if (value && value !== "null") {
+          newParams.set(key, value);
+        } else {
+          newParams.delete(key);
+        }
+      });
+
+      // URL 업데이트 (현재 페이지 상태를 유지하면서)
+      const newUrl = `${window.location.pathname}?${newParams.toString()}`;
+      router.replace(newUrl);
+    },
+    [searchParams, router]
+  );
+
   // 데이터 로딩 함수
   const loadArticles = useCallback(
     async (page: number = 1, reset: boolean = true) => {
@@ -42,7 +70,6 @@ export default function ArticlesPageClient() {
           reset,
           selectedCategory,
           selectedRegion,
-          searchQuery,
           sortBy,
         });
 
@@ -54,21 +81,33 @@ export default function ArticlesPageClient() {
         }
 
         // 필터가 없을 때는 모든 아티클을 보여줌
-        const hasFilters = !!(
-          selectedCategory ||
-          selectedRegion ||
-          searchQuery
-        );
+        const hasFilters = !!(selectedCategory || selectedRegion);
         const showAll = !hasFilters; // 필터가 없을 때는 항상 모든 아티클 표시
 
-        // Dynamic import로 함수 로딩
-        const { getArticlesPaginated } = await import(
-          "@/lib/supabase/articles"
-        );
+        // Dynamic import로 함수 로딩 (오류 처리 강화)
+        let getArticlesPaginated;
+        try {
+          const articlesModule = await import("@/lib/supabase/articles");
+          getArticlesPaginated = articlesModule.getArticlesPaginated;
+
+          if (
+            !getArticlesPaginated ||
+            typeof getArticlesPaginated !== "function"
+          ) {
+            throw new Error("getArticlesPaginated 함수를 찾을 수 없습니다.");
+          }
+        } catch (importError) {
+          console.error("❌ 모듈 로딩 실패:", importError);
+          // 페이지 새로고침을 통한 복구 시도
+          if (typeof window !== "undefined") {
+            window.location.reload();
+          }
+          return;
+        }
+
         const result = await getArticlesPaginated(page, PAGE_SIZE, {
           categorySlug: selectedCategory || undefined, // categoryId에서 categorySlug로 변경
           region: selectedRegion || undefined,
-          searchQuery: searchQuery || undefined,
           sortBy,
           showAll: showAll, // showAll 옵션 명시적 전달
         });
@@ -101,8 +140,9 @@ export default function ArticlesPageClient() {
         setLoadingMore(false);
       }
     },
-    [selectedCategory, selectedRegion, searchQuery, sortBy]
+    [selectedCategory, selectedRegion, sortBy]
   );
+
   // 카테고리 로딩
   const loadCategories = useCallback(async () => {
     try {
@@ -116,9 +156,68 @@ export default function ArticlesPageClient() {
     }
   }, []);
 
-  // 초기 데이터 로딩
+  // URL 파라미터에서 초기 필터 상태 읽기
   useEffect(() => {
-    Promise.all([loadArticles(1, true), loadCategories()]);
+    const category = searchParams.get("category");
+    const region = searchParams.get("region");
+    const sort = searchParams.get("sort");
+
+    // 유효한 카테고리인지 확인
+    if (
+      category &&
+      [
+        "cafe",
+        "restaurant",
+        "popup",
+        "culture",
+        "shopping",
+        "exhibition",
+      ].includes(category)
+    ) {
+      setCategory(category as CategoryFilter);
+    }
+
+    // 유효한 지역인지 확인
+    if (
+      region &&
+      [
+        "seoul",
+        "busan",
+        "daegu",
+        "incheon",
+        "gwangju",
+        "daejeon",
+        "ulsan",
+        "sejong",
+        "gyeonggi",
+        "gangwon",
+        "chungbuk",
+        "chungnam",
+        "jeonbuk",
+        "jeonnam",
+        "gyeongbuk",
+        "gyeongnam",
+        "jeju",
+        "all",
+      ].includes(region)
+    ) {
+      setRegion(region as any);
+    }
+
+    // 유효한 정렬 방식인지 확인
+    if (sort && ["latest", "popular", "oldest"].includes(sort)) {
+      setSortBy(sort as any);
+    }
+  }, [searchParams, setCategory, setRegion, setSortBy]);
+
+  // 초기 데이터 로딩 (URL 파라미터 로딩 후 실행)
+  useEffect(() => {
+    // URL 파라미터가 처리된 후 데이터 로딩
+    const timer = setTimeout(() => {
+      Promise.all([loadArticles(1, true), loadCategories()]);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [loadArticles, loadCategories]);
 
   // 필터 변경 시 첫 페이지로 리셋
@@ -126,7 +225,7 @@ export default function ArticlesPageClient() {
     if (articlesData) {
       loadArticles(1, true);
     }
-  }, [selectedCategory, selectedRegion, searchQuery, sortBy]);
+  }, [selectedCategory, selectedRegion, sortBy]);
 
   // 더 많은 아티클 로드
   const loadMore = () => {
@@ -194,14 +293,17 @@ export default function ArticlesPageClient() {
         </div>
 
         {/* 필터 및 정렬 */}
-        <div className="mb-8 space-y-4">
+        <div className="mb-8">
           <div className="flex flex-wrap gap-4">
             {/* 카테고리 필터 */}
             <select
               value={selectedCategory || ""}
               onChange={(e) => {
                 const value = e.target.value;
-                setCategory(value === "" ? null : (value as CategoryFilter));
+                const newCategory =
+                  value === "" ? null : (value as CategoryFilter);
+                setCategory(newCategory);
+                updateURL({ category: newCategory });
               }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
             >
@@ -216,9 +318,14 @@ export default function ArticlesPageClient() {
             {/* 정렬 */}
             <select
               value={sortBy}
-              onChange={(e) =>
-                setSortBy(e.target.value as "latest" | "popular" | "oldest")
-              }
+              onChange={(e) => {
+                const newSort = e.target.value as
+                  | "latest"
+                  | "popular"
+                  | "oldest";
+                setSortBy(newSort);
+                updateURL({ sort: newSort });
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
             >
               <option value="latest">최신순</option>
@@ -228,22 +335,18 @@ export default function ArticlesPageClient() {
 
             {/* 필터 초기화 */}
             <button
-              onClick={clearFilters}
+              onClick={() => {
+                clearFilters();
+                updateURL({
+                  category: null,
+                  region: null,
+                  sort: "latest",
+                });
+              }}
               className="px-4 py-2 text-gray-600 hover:text-black transition-colors"
             >
               필터 초기화
             </button>
-          </div>
-
-          {/* 검색 */}
-          <div className="max-w-md">
-            <input
-              type="text"
-              placeholder="아티클 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white placeholder-gray-500"
-            />
           </div>
         </div>
 
@@ -320,7 +423,7 @@ export default function ArticlesPageClient() {
             </div>
 
             {/* 페이지네이션 - 필터가 적용되었을 때만 표시 */}
-            {(selectedCategory || selectedRegion || searchQuery) &&
+            {(selectedCategory || selectedRegion) &&
               articlesData.totalPages > 1 && (
                 <div className="mt-12 flex flex-col items-center space-y-4">
                   {/* 더 보기 버튼 (무한 스크롤 스타일) */}
@@ -395,7 +498,7 @@ export default function ArticlesPageClient() {
               )}
 
             {/* 필터가 없을 때 표시할 간단한 통계 */}
-            {!selectedCategory && !selectedRegion && !searchQuery && (
+            {!selectedCategory && !selectedRegion && (
               <div className="mt-12 text-center">
                 <p className="text-sm text-gray-500">
                   전체 {articlesData.total}개의 아티클을 모두 표시하고 있습니다
@@ -406,13 +509,13 @@ export default function ArticlesPageClient() {
         ) : (
           <div className="text-center py-20">
             <div className="text-gray-500 text-lg mb-4">
-              {searchQuery || selectedCategory || selectedRegion
+              {selectedCategory || selectedRegion
                 ? "검색 결과가 없습니다"
                 : "아직 아티클이 없습니다"}
             </div>
             <p className="text-gray-500 text-sm">
-              {searchQuery || selectedCategory || selectedRegion
-                ? "다른 검색어나 필터를 시도해보세요"
+              {selectedCategory || selectedRegion
+                ? "다른 필터를 시도해보세요"
                 : "곧 새로운 아티클을 만나보실 수 있습니다"}
             </p>
           </div>
