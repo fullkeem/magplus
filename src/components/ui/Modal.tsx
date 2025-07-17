@@ -171,7 +171,7 @@ export default function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px]"
+                className="p-2 text-gray-500 hover:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px]"
                 aria-label="모달 닫기"
                 type="button"
               >
@@ -185,7 +185,7 @@ export default function Modal({
         {!title && showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-black transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px]"
+            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-black transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm min-h-[44px] min-w-[44px]"
             aria-label="모달 닫기"
             type="button"
           >

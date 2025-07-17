@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 export interface UIState {
   // Modal states
-  isSubscribeModalOpen: boolean;
   isShareModalOpen: boolean;
   isMenuOpen: boolean;
 
@@ -27,8 +26,6 @@ export interface UIState {
 
 export interface UIActions {
   // Modal actions
-  openSubscribeModal: () => void;
-  closeSubscribeModal: () => void;
   openShareModal: () => void;
   closeShareModal: () => void;
   toggleMenu: () => void;
@@ -61,7 +58,6 @@ type UIStore = UIState & UIActions;
 
 export const useUIStore = create<UIStore>((set, get) => ({
   // State
-  isSubscribeModalOpen: false,
   isShareModalOpen: false,
   isMenuOpen: false,
   isPageLoading: false,
@@ -71,10 +67,6 @@ export const useUIStore = create<UIStore>((set, get) => ({
   toasts: [],
 
   // Modal actions
-  openSubscribeModal: () => set({ isSubscribeModalOpen: true }),
-
-  closeSubscribeModal: () => set({ isSubscribeModalOpen: false }),
-
   openShareModal: () => set({ isShareModalOpen: true }),
 
   closeShareModal: () => set({ isShareModalOpen: false }),

@@ -50,4 +50,5 @@ export const CATEGORIES = [
 ] as const;
 
 export type CategoryId = (typeof CATEGORIES)[number]["id"];
-export type CategoryFilter = CategoryId | "all";
+export type CategorySlug = (typeof CATEGORIES)[number]["slug"];
+export type CategoryFilter = CategorySlug | null;

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CategoryId, CategoryFilter } from "@/constants/categories";
+import type { CategoryFilter } from "@/constants/categories";
 import type { RegionId, RegionFilter } from "@/constants/regions";
 
 export interface FiltersState {

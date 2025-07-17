@@ -7,13 +7,10 @@
 -- 2. Articles 테이블 생성
 \i 002_create_articles.sql
 
--- 3. Subscriptions 테이블 생성 (이메일 기반)
-\i 003_create_subscriptions.sql
-
--- 4. Shares 테이블 생성 (익명 공유 통계)
+-- 3. Shares 테이블 생성 (익명 공유 통계)
 \i 004_create_shares.sql
 
--- 5. RLS 정책 설정 (공개 읽기)
+-- 4. RLS 정책 설정 (공개 읽기)
 \i 005_setup_rls_policies.sql
 
 -- 실제 데이터는 Supabase MCP를 통해 추가됨 

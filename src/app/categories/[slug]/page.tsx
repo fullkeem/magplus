@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getArticles } from "@/lib/supabase/articles";
+import { getArticlesPaginated } from "@/lib/supabase/articles";
 import { getCategories } from "@/lib/supabase/categories";
 import { CATEGORIES } from "@/constants/categories";
 import CategoryPageClient from "./CategoryPageClient";
@@ -74,10 +74,13 @@ export default async function CategoryPage({ params }: Props) {
       notFound();
     }
 
-    const articles = await getArticles({
-      category: category.id,
-      status: "published",
+    // 해당 카테고리의 아티클만 가져오기 (페이지네이션 없이 모든 아티클)
+    const articlesResult = await getArticlesPaginated(1, 1000, {
+      categorySlug: slug,
+      sortBy: "latest",
     });
+
+    const articles = articlesResult.data;
 
     // 구조화된 데이터 (JSON-LD)
     const structuredData = {
@@ -97,7 +100,7 @@ export default async function CategoryPage({ params }: Props) {
       mainEntity: {
         "@type": "ItemList",
         numberOfItems: articles.length,
-        itemListElement: articles.map((article, index) => ({
+        itemListElement: articles.map((article: any, index: number) => ({
           "@type": "ListItem",
           position: index + 1,
           item: {

@@ -15,8 +15,6 @@ export default function robots(): MetadataRoute.Robots {
           "/private/",
           "/temp/",
           "/*.json$",
-          "/verify?*",
-          "/unsubscribe?*",
         ],
       },
       {

@@ -1,184 +1,146 @@
-"use client";
-
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { useFilters } from "@/hooks/useStores";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import Input from "@/components/ui/Input";
-import { getArticles } from "@/lib/supabase/articles";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getAllArticles } from "@/lib/supabase/articles";
+import { getCategories } from "@/lib/supabase/categories";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
 
-function SearchContent() {
-  const searchParams = useSearchParams();
-  const { searchQuery, setSearchQuery } = useFilters();
-  const [articles, setArticles] = useState<ArticleWithCategory[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
+export const metadata: Metadata = {
+  title: "검색 | MAG+",
+  description: "MAG+ 아티클 검색",
+};
 
-  useEffect(() => {
-    const query = searchParams.get("q") || "";
-    if (query) {
-      setLocalSearchQuery(query);
-      setSearchQuery(query);
-      performSearch(query);
-    }
-  }, [searchParams, setSearchQuery]);
+interface Props {
+  searchParams: Promise<{ q?: string; category?: string; region?: string }>;
+}
 
-  useEffect(() => {
-    if (searchQuery && searchQuery !== localSearchQuery) {
-      setLocalSearchQuery(searchQuery);
-      performSearch(searchQuery);
-    }
-  }, [searchQuery, localSearchQuery]);
+export default async function SearchPage({ searchParams }: Props) {
+  const { q, category, region } = await searchParams;
 
-  const performSearch = async (query: string) => {
-    if (!query.trim()) return;
+  if (!q && !category && !region) {
+    notFound();
+  }
 
-    setLoading(true);
-    try {
-      const allArticles = await getArticles();
-      const filtered = allArticles.filter(
-        (article) =>
-          article.title.toLowerCase().includes(query.toLowerCase()) ||
-          article.content.toLowerCase().includes(query.toLowerCase()) ||
-          article.category?.name.toLowerCase().includes(query.toLowerCase())
-      );
-      setArticles(filtered);
-    } catch (error) {
-      console.error("검색 중 오류:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 모든 아티클을 가져와서 서버 사이드에서 필터링
+  const allArticles = await getAllArticles();
+  const categories = await getCategories();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    performSearch(localSearchQuery);
-  };
+  // 서버 사이드에서 기본 필터링
+  let filteredArticles = allArticles;
 
-  const getCategoryIcon = (slug: string) => {
-    const icons: { [key: string]: string } = {
-      cafe: "☕",
-      restaurant: "🍽️",
-      popup: "🏪",
-      culture: "🎭",
-      shopping: "🛍️",
-      exhibition: "🎨",
-    };
-    return icons[slug] || "📍";
-  };
+  if (q) {
+    filteredArticles = filteredArticles.filter(
+      (article) =>
+        article.title.toLowerCase().includes(q.toLowerCase()) ||
+        article.content.toLowerCase().includes(q.toLowerCase()) ||
+        (article.excerpt &&
+          article.excerpt.toLowerCase().includes(q.toLowerCase()))
+    );
+  }
+
+  if (category) {
+    filteredArticles = filteredArticles.filter(
+      (article) => article.category?.slug === category
+    );
+  }
+
+  if (region) {
+    filteredArticles = filteredArticles.filter(
+      (article) => article.region === region
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* 검색 헤더 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h1 className="text-2xl font-light text-gray-900 mb-6">
-            아티클 검색
-          </h1>
-
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="검색어를 입력하세요..."
-                value={localSearchQuery}
-                onChange={(e) => setLocalSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "검색 중..." : "검색"}
-            </button>
-          </form>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-8">
+          <h1 className="text-3xl font-light text-black mb-4">검색 결과</h1>
+          {q && (
+            <p className="text-gray-600">
+              "{q}"에 대한 검색 결과 {filteredArticles.length}개
+            </p>
+          )}
         </div>
 
-        {/* 검색 결과 */}
-        {localSearchQuery && (
-          <div className="mb-6">
-            <h2 className="text-lg font-light text-gray-700">
-              &quot;{localSearchQuery}&quot; 검색 결과 ({articles.length}개)
-            </h2>
-          </div>
-        )}
+        {filteredArticles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredArticles.map((article) => (
+              <article key={article.id} className="group">
+                <Link href={`/articles/${article.id}`}>
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    {/* 이미지 */}
+                    <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                      {article.images && article.images.length > 0 ? (
+                        <Image
+                          src={article.images[0]}
+                          alt={article.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500 text-sm">
+                            No Image
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : articles.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article) => (
-              <Link
-                key={article.id}
-                href={`/articles/${article.id}`}
-                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="aspect-video bg-gray-200 relative">
-                  <Image
-                    src={article.images?.[0] || "/placeholder-image.jpg"}
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-white bg-opacity-90 text-gray-800 rounded-full">
-                      {getCategoryIcon(article.category?.slug || "")}
-                      <span className="ml-1">{article.category?.name}</span>
-                    </span>
+                    {/* 내용 */}
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide mb-3">
+                        <span>{article.category?.name}</span>
+                        {article.region && (
+                          <>
+                            <span>•</span>
+                            <span>{article.region}</span>
+                          </>
+                        )}
+                      </div>
+
+                      <h3 className="text-xl font-light text-black mb-3 group-hover:text-gray-600 transition-colors line-clamp-2">
+                        {article.title}
+                      </h3>
+
+                      {article.excerpt && (
+                        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                          {article.excerpt}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
+                        <div className="flex items-center space-x-3">
+                          <span aria-label={`조회수 ${article.views || 0}회`}>
+                            👁 {article.views || 0}
+                          </span>
+                        </div>
+                        {article.region && (
+                          <span
+                            className="truncate max-w-[120px]"
+                            title={article.region}
+                          >
+                            📍 {article.region}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-light text-lg text-gray-900 mb-2 line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                    {article.content.substring(0, 100)}...
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{article.region}</span>
-                    <span>
-                      {article.created_at &&
-                        new Date(article.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </article>
             ))}
           </div>
-        ) : localSearchQuery && !loading ? (
+        ) : (
           <div className="text-center py-12">
-            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-light text-gray-900 mb-2">
+            <div className="text-gray-500 text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-light text-gray-900 mb-2">
               검색 결과가 없습니다
             </h3>
             <p className="text-gray-600">다른 검색어를 시도해보세요.</p>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-light text-gray-900 mb-2">
-              검색어를 입력하세요
-            </h3>
-            <p className="text-gray-600">관심 있는 아티클을 찾아보세요.</p>
-          </div>
         )}
       </div>
     </div>
-  );
-}
-
-export default function SearchPage() {
-  return (
-    <Suspense fallback={<LoadingSpinner size="lg" />}>
-      <SearchContent />
-    </Suspense>
   );
 }

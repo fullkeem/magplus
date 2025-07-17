@@ -1,198 +1,526 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useFilters } from "@/hooks/useStores";
-import { REGIONS } from "@/constants/regions";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { getArticles } from "@/lib/supabase/articles";
-import { getCategories } from "@/lib/supabase/categories";
-import type { ArticleWithCategory, Category } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
+
+import { useState, useEffect, useCallback } from "react";
+import { useFilters } from "@/hooks/useStores";
+import type { CategoryFilter } from "@/constants/categories";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import type { PaginationResult } from "@/lib/supabase/articles";
+import { getCategories } from "@/lib/supabase/categories";
+import type { ArticleWithCategory, Category } from "@/lib/database.types";
 
 export default function ArticlesPageClient() {
-  const { selectedCategory, selectedRegion, searchQuery } = useFilters();
-  const [articles, setArticles] = useState<ArticleWithCategory[]>([]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const {
+    selectedCategory,
+    selectedRegion,
+    sortBy,
+    setCategory,
+    setRegion,
+    setSortBy,
+    clearFilters,
+  } = useFilters();
+
+  const [articlesData, setArticlesData] =
+    useState<PaginationResult<ArticleWithCategory> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filteredArticles, setFilteredArticles] = useState<
-    ArticleWithCategory[]
-  >([]);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    loadData();
+  const PAGE_SIZE = 20; // 12에서 20으로 증가
+
+  // URL 업데이트 함수
+  const updateURL = useCallback(
+    (params: {
+      category?: string | null;
+      region?: string | null;
+      sort?: string | null;
+    }) => {
+      const newParams = new URLSearchParams(searchParams);
+
+      // 파라미터 업데이트
+      Object.entries(params).forEach(([key, value]) => {
+        if (value && value !== "null") {
+          newParams.set(key, value);
+        } else {
+          newParams.delete(key);
+        }
+      });
+
+      // URL 업데이트 (현재 페이지 상태를 유지하면서)
+      const newUrl = `${window.location.pathname}?${newParams.toString()}`;
+      router.replace(newUrl);
+    },
+    [searchParams, router]
+  );
+
+  // 데이터 로딩 함수
+  const loadArticles = useCallback(
+    async (page: number = 1, reset: boolean = true) => {
+      try {
+        console.log("🔄 아티클 로딩 시작:", {
+          page,
+          reset,
+          selectedCategory,
+          selectedRegion,
+          sortBy,
+        });
+
+        if (reset) {
+          setLoading(true);
+          setError(null);
+        } else {
+          setLoadingMore(true);
+        }
+
+        // 필터가 없을 때는 모든 아티클을 보여줌
+        const hasFilters = !!(selectedCategory || selectedRegion);
+        const showAll = !hasFilters; // 필터가 없을 때는 항상 모든 아티클 표시
+
+        // Dynamic import로 함수 로딩 (오류 처리 강화)
+        let getArticlesPaginated;
+        try {
+          const articlesModule = await import("@/lib/supabase/articles");
+          getArticlesPaginated = articlesModule.getArticlesPaginated;
+
+          if (
+            !getArticlesPaginated ||
+            typeof getArticlesPaginated !== "function"
+          ) {
+            throw new Error("getArticlesPaginated 함수를 찾을 수 없습니다.");
+          }
+        } catch (importError) {
+          console.error("❌ 모듈 로딩 실패:", importError);
+          // 페이지 새로고침을 통한 복구 시도
+          if (typeof window !== "undefined") {
+            window.location.reload();
+          }
+          return;
+        }
+
+        const result = await getArticlesPaginated(page, PAGE_SIZE, {
+          categorySlug: selectedCategory || undefined, // categoryId에서 categorySlug로 변경
+          region: selectedRegion || undefined,
+          sortBy,
+          showAll: showAll, // showAll 옵션 명시적 전달
+        });
+
+        console.log("✅ 아티클 로딩 완료:", result);
+
+        if (reset) {
+          setArticlesData(result);
+        } else {
+          setArticlesData((prev) =>
+            prev
+              ? {
+                  ...result,
+                  data: [...prev.data, ...result.data],
+                }
+              : result
+          );
+        }
+
+        setCurrentPage(page);
+      } catch (err) {
+        console.error("❌ 아티클 로딩 실패:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "아티클을 불러오는데 실패했습니다."
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [selectedCategory, selectedRegion, sortBy]
+  );
+
+  // 카테고리 로딩
+  const loadCategories = useCallback(async () => {
+    try {
+      console.log("🔄 카테고리 로딩 시작");
+      const categoriesData = await getCategories();
+      console.log("✅ 카테고리 로딩 완료:", categoriesData);
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error("❌ 카테고리 로딩 실패:", err);
+      // 카테고리 로딩 실패는 치명적이지 않으므로 에러 상태로 설정하지 않음
+    }
   }, []);
 
+  // URL 파라미터에서 초기 필터 상태 읽기
   useEffect(() => {
-    applyFilters();
-  }, [articles, selectedCategory, selectedRegion, searchQuery]);
+    const category = searchParams.get("category");
+    const region = searchParams.get("region");
+    const sort = searchParams.get("sort");
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [articlesData, categoriesData] = await Promise.all([
-        getArticles({ status: "published" }),
-        getCategories(),
-      ]);
+    // 유효한 카테고리인지 확인
+    if (
+      category &&
+      [
+        "cafe",
+        "restaurant",
+        "popup",
+        "culture",
+        "shopping",
+        "exhibition",
+      ].includes(category)
+    ) {
+      setCategory(category as CategoryFilter);
+    }
 
-      setArticles(articlesData);
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
-      setLoading(false);
+    // 유효한 지역인지 확인
+    if (
+      region &&
+      [
+        "seoul",
+        "busan",
+        "daegu",
+        "incheon",
+        "gwangju",
+        "daejeon",
+        "ulsan",
+        "sejong",
+        "gyeonggi",
+        "gangwon",
+        "chungbuk",
+        "chungnam",
+        "jeonbuk",
+        "jeonnam",
+        "gyeongbuk",
+        "gyeongnam",
+        "jeju",
+        "all",
+      ].includes(region)
+    ) {
+      setRegion(region as any);
+    }
+
+    // 유효한 정렬 방식인지 확인
+    if (sort && ["latest", "popular", "oldest"].includes(sort)) {
+      setSortBy(sort as any);
+    }
+  }, [searchParams, setCategory, setRegion, setSortBy]);
+
+  // 초기 데이터 로딩 (URL 파라미터 로딩 후 실행)
+  useEffect(() => {
+    // URL 파라미터가 처리된 후 데이터 로딩
+    const timer = setTimeout(() => {
+      Promise.all([loadArticles(1, true), loadCategories()]);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [loadArticles, loadCategories]);
+
+  // 필터 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    if (articlesData) {
+      loadArticles(1, true);
+    }
+  }, [selectedCategory, selectedRegion, sortBy]);
+
+  // 더 많은 아티클 로드
+  const loadMore = () => {
+    if (articlesData && articlesData.hasMore && !loadingMore) {
+      loadArticles(currentPage + 1, false);
     }
   };
 
-  const applyFilters = () => {
-    let filtered = articles;
-
-    if (selectedCategory && selectedCategory !== "all") {
-      filtered = filtered.filter(
-        (article) => article.category?.slug === selectedCategory
-      );
-    }
-
-    if (selectedRegion && selectedRegion !== "all") {
-      filtered = filtered.filter(
-        (article) => article.region === selectedRegion
-      );
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (article) =>
-          article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (article.excerpt &&
-            article.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    setFilteredArticles(filtered);
+  // 페이지 변경 (페이지네이션 버튼용)
+  const goToPage = (page: number) => {
+    loadArticles(page, true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const getCategoryIcon = (slug: string) => {
-    const categoryMap: Record<string, string> = {
-      cafe: "☕",
-      restaurant: "🍽️",
-      "popup-store": "🏪",
-      culture: "🎭",
-      shopping: "🛍️",
-      exhibition: "🎨",
-    };
-    return categoryMap[slug] || "📍";
-  };
-
-  const getRegionLabel = (region: string) => {
-    const regionData = REGIONS.find((r) => r.id === region);
-    return regionData?.name || region;
+  // 에러 재시도
+  const retry = () => {
+    setError(null);
+    loadArticles(1, true);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-center py-20">
+            <LoadingSpinner size="lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center py-20">
+            <div className="text-red-500 text-lg mb-4">
+              ⚠️ 오류가 발생했습니다
+            </div>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={retry}
+              className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* 페이지 헤더 */}
-      <div className="mb-12">
-        <h1 className="text-3xl md:text-4xl font-light text-black mb-4">
-          모든 아티클
-        </h1>
-        <p className="text-gray-600 text-lg font-light">
-          서울의 가장 흥미로운 장소와 경험을 발견하세요
-        </p>
-      </div>
-
-      {/* 결과 개수 */}
-      <div className="mb-8">
-        <h2 className="sr-only">검색 결과</h2>
-        <p className="text-sm text-gray-500">
-          {filteredArticles.length}{" "}
-          {filteredArticles.length === 1 ? "개의 아티클" : "개의 아티클"}이
-          있습니다
-        </p>
-      </div>
-
-      {/* 아티클 그리드 */}
-      {filteredArticles.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-500 text-lg font-light">
-            No articles found matching your criteria.
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* 헤더 */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-light text-black mb-4">
+            모든 아티클
+          </h1>
+          <p className="text-lg text-gray-600">
+            총 {articlesData?.total || 0}개의 아티클
           </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArticles.map((article) => (
-            <article key={article.id} className="group">
-              <Link
-                href={`/articles/${article.id}`}
-                className="block focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-sm"
-                aria-label={`${article.title} 아티클 읽기`}
-              >
-                <div className="aspect-[4/3] bg-gray-100 mb-4 overflow-hidden relative">
-                  {article.images && article.images.length > 0 ? (
-                    <Image
-                      src={article.images[0]}
-                      alt={article.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span
-                        className="text-gray-400 text-4xl"
-                        aria-hidden="true"
+
+        {/* 필터 및 정렬 */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-4">
+            {/* 카테고리 필터 */}
+            <select
+              value={selectedCategory || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                const newCategory =
+                  value === "" ? null : (value as CategoryFilter);
+                setCategory(newCategory);
+                updateURL({ category: newCategory });
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
+            >
+              <option value="">모든 카테고리</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            {/* 정렬 */}
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                const newSort = e.target.value as
+                  | "latest"
+                  | "popular"
+                  | "oldest";
+                setSortBy(newSort);
+                updateURL({ sort: newSort });
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-900 bg-white"
+            >
+              <option value="latest">최신순</option>
+              <option value="popular">조회수순</option>
+              <option value="oldest">오래된순</option>
+            </select>
+
+            {/* 필터 초기화 */}
+            <button
+              onClick={() => {
+                clearFilters();
+                updateURL({
+                  category: null,
+                  region: null,
+                  sort: "latest",
+                });
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-black transition-colors"
+            >
+              필터 초기화
+            </button>
+          </div>
+        </div>
+
+        {/* 아티클 목록 */}
+        {articlesData && articlesData.data.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {articlesData.data.map((article) => (
+                <article key={article.id} className="group">
+                  <Link href={`/articles/${article.id}`}>
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* 이미지 */}
+                      <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                        {article.images && article.images.length > 0 ? (
+                          <Image
+                            src={article.images[0]}
+                            alt={article.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-gray-500 text-sm">
+                              No Image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 내용 */}
+                      <div className="p-6">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide mb-3">
+                          <span>{article.category?.name}</span>
+                          {article.region && (
+                            <>
+                              <span>•</span>
+                              <span>{article.region}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <h3 className="text-xl font-light text-black mb-3 group-hover:text-gray-600 transition-colors line-clamp-2">
+                          {article.title}
+                        </h3>
+
+                        {article.excerpt && (
+                          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                            {article.excerpt}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
+                          <div className="flex items-center space-x-3">
+                            <span aria-label={`조회수 ${article.views || 0}회`}>
+                              👁 {article.views || 0}
+                            </span>
+                            <span>
+                              {new Date(
+                                article.created_at || ""
+                              ).toLocaleDateString("ko-KR", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
+
+            {/* 페이지네이션 - 필터가 적용되었을 때만 표시 */}
+            {(selectedCategory || selectedRegion) &&
+              articlesData.totalPages > 1 && (
+                <div className="mt-12 flex flex-col items-center space-y-4">
+                  {/* 더 보기 버튼 (무한 스크롤 스타일) */}
+                  {articlesData.hasMore && (
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingMore ? (
+                        <div className="flex items-center space-x-2">
+                          <LoadingSpinner size="sm" />
+                          <span>로딩 중...</span>
+                        </div>
+                      ) : (
+                        "더 보기"
+                      )}
+                    </button>
+                  )}
+
+                  {/* 페이지 번호 네비게이션 */}
+                  {articlesData.totalPages > 1 && (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => goToPage(articlesData.page - 1)}
+                        disabled={articlesData.page === 1}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {getCategoryIcon(article.category?.slug || "")}
-                      </span>
+                        이전
+                      </button>
+
+                      {/* 페이지 번호들 */}
+                      {Array.from(
+                        { length: Math.min(5, articlesData.totalPages) },
+                        (_, i) => {
+                          const pageNum =
+                            Math.max(1, articlesData.page - 2) + i;
+                          if (pageNum > articlesData.totalPages) return null;
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => goToPage(pageNum)}
+                              className={`px-3 py-2 text-sm border rounded-lg ${
+                                pageNum === articlesData.page
+                                  ? "bg-black text-white border-black"
+                                  : "border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+                      )}
+
+                      <button
+                        onClick={() => goToPage(articlesData.page + 1)}
+                        disabled={articlesData.page === articlesData.totalPages}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        다음
+                      </button>
                     </div>
                   )}
+
+                  {/* 페이지 정보 */}
+                  <p className="text-sm text-gray-500">
+                    {articlesData.page} / {articlesData.totalPages} 페이지 (총{" "}
+                    {articlesData.total}개)
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide">
-                    <span>{article.category?.name}</span>
-                    {article.region && (
-                      <>
-                        <span aria-hidden="true">•</span>
-                        <span>{getRegionLabel(article.region)}</span>
-                      </>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-medium text-black group-hover:text-gray-600 transition-colors leading-tight">
-                    {article.title}
-                  </h3>
-                  {article.excerpt && (
-                    <p className="text-sm text-gray-600 font-light leading-relaxed">
-                      {article.excerpt}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span aria-label={`조회수 ${article.views || 0}회`}>
-                      {article.views || 0} views
-                    </span>
-                    <span aria-label={`좋아요 ${article.likes || 0}개`}>
-                      {article.likes || 0} likes
-                    </span>
-                    {article.published_at && (
-                      <time dateTime={article.published_at}>
-                        {new Date(article.published_at).toLocaleDateString(
-                          "ko-KR"
-                        )}
-                      </time>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </article>
-          ))}
-        </div>
-      )}
+              )}
+
+            {/* 필터가 없을 때 표시할 간단한 통계 */}
+            {!selectedCategory && !selectedRegion && (
+              <div className="mt-12 text-center">
+                <p className="text-sm text-gray-500">
+                  전체 {articlesData.total}개의 아티클을 모두 표시하고 있습니다
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-20">
+            <div className="text-gray-500 text-lg mb-4">
+              {selectedCategory || selectedRegion
+                ? "검색 결과가 없습니다"
+                : "아직 아티클이 없습니다"}
+            </div>
+            <p className="text-gray-500 text-sm">
+              {selectedCategory || selectedRegion
+                ? "다른 필터를 시도해보세요"
+                : "곧 새로운 아티클을 만나보실 수 있습니다"}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

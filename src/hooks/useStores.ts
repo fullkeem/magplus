@@ -1,7 +1,7 @@
-import { useFiltersStore, useUIStore, useSubscriptionStore } from "@/stores";
+import { useFiltersStore } from "@/stores/filters";
+import { useUIStore } from "@/stores/ui";
 
-// 자주 사용되는 상태들을 조합한 커스텀 훅들
-
+// 기본 스토어 훅들
 export const useFilters = () => {
   const {
     selectedCategory,
@@ -38,7 +38,6 @@ export const useFilters = () => {
 
 export const useUI = () => {
   const {
-    isSubscribeModalOpen,
     isShareModalOpen,
     isMenuOpen,
     isPageLoading,
@@ -46,8 +45,6 @@ export const useUI = () => {
     theme,
     sidebarCollapsed,
     toasts,
-    openSubscribeModal,
-    closeSubscribeModal,
     openShareModal,
     closeShareModal,
     toggleMenu,
@@ -63,11 +60,9 @@ export const useUI = () => {
     showSuccess,
     showError,
     showInfo,
-    showWarning,
   } = useUIStore();
 
   return {
-    isSubscribeModalOpen,
     isShareModalOpen,
     isMenuOpen,
     isPageLoading,
@@ -75,8 +70,6 @@ export const useUI = () => {
     theme,
     sidebarCollapsed,
     toasts,
-    openSubscribeModal,
-    closeSubscribeModal,
     openShareModal,
     closeShareModal,
     toggleMenu,
@@ -92,111 +85,16 @@ export const useUI = () => {
     showSuccess,
     showError,
     showInfo,
-    showWarning,
-  };
-};
-
-export const useSubscription = () => {
-  const {
-    isSubscribed,
-    email,
-    preferences,
-    bookmarkedArticles,
-    readArticles,
-    subscribe,
-    unsubscribe,
-    updatePreferences,
-    addBookmark,
-    removeBookmark,
-    clearBookmarks,
-    markAsRead,
-    markAsUnread,
-    clearReadingHistory,
-  } = useSubscriptionStore();
-
-  return {
-    isSubscribed,
-    email,
-    preferences,
-    bookmarkedArticles,
-    readArticles,
-    subscribe,
-    unsubscribe,
-    updatePreferences,
-    addBookmark,
-    removeBookmark,
-    clearBookmarks,
-    markAsRead,
-    markAsUnread,
-    clearReadingHistory,
   };
 };
 
 // 특정 기능을 위한 조합 훅들
 
-export const useBookmarks = () => {
-  const { bookmarkedArticles, addBookmark, removeBookmark, clearBookmarks } =
-    useSubscriptionStore();
-
-  const isBookmarked = (articleId: string) =>
-    bookmarkedArticles.includes(articleId);
-
-  const toggleBookmark = (articleId: string) => {
-    if (isBookmarked(articleId)) {
-      removeBookmark(articleId);
-    } else {
-      addBookmark(articleId);
-    }
-  };
-
-  return {
-    bookmarkedArticles,
-    isBookmarked,
-    toggleBookmark,
-    clearBookmarks,
-  };
-};
-
-export const useReadingHistory = () => {
-  const { readArticles, markAsRead, clearReadingHistory } =
-    useSubscriptionStore();
-
-  const isRead = (articleId: string) => readArticles.includes(articleId);
-
-  return {
-    readArticles,
-    isRead,
-    markAsRead,
-    clearReadingHistory,
-  };
-};
-
 export const useToasts = () => {
-  const { toasts, addToast, removeToast, clearToasts } = useUIStore();
-
-  const showSuccess = (message: string, duration?: number) => {
-    addToast({ type: "success", message, duration });
-  };
-
-  const showError = (message: string, duration?: number) => {
-    addToast({ type: "error", message, duration });
-  };
-
-  const showInfo = (message: string, duration?: number) => {
-    addToast({ type: "info", message, duration });
-  };
-
-  const showWarning = (message: string, duration?: number) => {
-    addToast({ type: "warning", message, duration });
-  };
+  const { toasts, removeToast } = useUIStore();
 
   return {
     toasts,
-    showSuccess,
-    showError,
-    showInfo,
-    showWarning,
     removeToast,
-    clearToasts,
   };
 };

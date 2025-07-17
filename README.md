@@ -1,71 +1,109 @@
 # MAG+ 웹매거진
 
-MAG+ (Magazine Plus)는 평범한 공간이나 놀거리가 아닌 새로운 경험이나 즐거움을 찾는 사람들을 위한 웹매거진입니다.
+MAG+ (Magazine Plus)는 MZ세대를 위한 핫플레이스 웹매거진입니다. 서울의 숨겨진 보석들을 발견하고, 트렌디한 카페부터 독특한 팝업스토어까지 다양한 문화 공간을 소개합니다.
 
 ## 🎯 프로젝트 개요
 
 - **제품명**: MAG+ (Magazine Plus)
-- **목적**: 사람들이 잘 모르는 공간과 놀거리를 소개하여 좋은 정보의 즐거움 제공
-- **타겟**: MZ세대 중심 (20-35세)의 경험 중심 소비자
+- **목적**: MZ세대를 위한 핫플레이스 큐레이션 웹매거진
+- **타겟**: 20-35세 MZ세대, 경험 중심 소비자
+- **콘셉트**: 평범한 공간이 아닌 새로운 경험과 즐거움을 제공하는 공간 소개
 
 ## 🚀 기술 스택
 
 ### 프론트엔드
 
-- **Next.js**: 15.3.5 (App Router)
-- **React**: 19.x
-- **TypeScript**: 5.8.3
-- **Tailwind CSS**: 4.1.x
+- **Next.js**: 15.3.5 (App Router, React 19)
+- **TypeScript**: 5.x (Strict mode)
+- **Tailwind CSS**: 4.x
 - **Zustand**: 5.0.6 (상태 관리)
+- **React Markdown**: 마크다운 렌더링
+- **Heroicons**: 아이콘
 
 ### 백엔드
 
+- **Supabase**: 데이터베이스, 인증, 실시간 기능
 - **PostgreSQL**: 데이터베이스
 - **Next.js API Routes**: 서버 API
 
 ### 개발 도구
 
 - **패키지 매니저**: pnpm
+- **린터**: ESLint (Next.js 설정)
+- **타입 체크**: TypeScript
 - **배포**: Vercel
-- **린팅**: ESLint
-- **타입 체크**: TypeScript strict mode
 
 ## 📁 프로젝트 구조
 
 ```
 src/
-├── app/                 # Next.js App Router 페이지
-├── components/          # React 컴포넌트
-│   ├── ui/             # 기본 UI 컴포넌트
-│   ├── layout/         # 레이아웃 컴포넌트
-│   ├── article/        # 아티클 관련 컴포넌트
-│   ├── category/       # 카테고리 관련 컴포넌트
-│   └── common/         # 공통 컴포넌트
-├── lib/                # 라이브러리 설정
-├── stores/             # Zustand 상태 관리 스토어
-├── hooks/              # 커스텀 React 훅
-├── utils/              # 유틸리티 함수
-├── types/              # TypeScript 타입 정의
-└── constants/          # 상수 정의
+├── app/                    # Next.js App Router 페이지
+│   ├── api/               # API 라우트
+│   │   ├── articles/      # 아티클 API
+│   │   ├── categories/    # 카테고리 API
+│   │   ├── search/        # 검색 API
+│   │   └── share/         # 공유 API
+│   ├── articles/          # 아티클 페이지
+│   ├── categories/        # 카테고리 페이지
+│   ├── search/            # 검색 페이지
+│   └── layout.tsx         # 루트 레이아웃
+├── components/            # React 컴포넌트
+│   ├── article/          # 아티클 관련 컴포넌트
+│   ├── category/         # 카테고리 관련 컴포넌트
+│   ├── common/           # 공통 컴포넌트
+│   ├── layout/           # 레이아웃 컴포넌트
+│   └── ui/               # 기본 UI 컴포넌트
+├── lib/                  # 라이브러리 및 유틸리티
+│   └── supabase/         # Supabase 관련 함수
+├── stores/               # Zustand 상태 관리
+├── hooks/                # 커스텀 React 훅
+├── constants/            # 상수 정의
+├── types/                # TypeScript 타입
+└── utils/                # 유틸리티 함수
 ```
+
+## 🗄️ 데이터베이스 구조
+
+### 주요 테이블
+
+- **articles**: 아티클 콘텐츠 및 메타데이터
+- **categories**: 카테고리 분류 (카페, 레스토랑, 팝업스토어 등)
+- **shares**: 공유 통계 및 분석 데이터
+
+### 카테고리 분류
+
+- **카페** (cafe): 트렌디한 카페와 커피 문화
+- **레스토랑** (restaurant): 맛있는 레스토랑과 다이닝
+- **팝업스토어** (popup): 한정적인 팝업 스토어와 이벤트
+- **문화생활** (culture): 전시회, 공연, 문화 이벤트
+- **쇼핑** (shopping): 쇼핑몰, 브랜드, 패션
+- **전시회** (exhibition): 아트 갤러리와 전시회
 
 ## 🏗️ 설치 및 실행
 
-### 1. 의존성 설치
+### 1. 저장소 클론
+
+```bash
+git clone <repository-url>
+cd web_magazine
+```
+
+### 2. 의존성 설치
 
 ```bash
 pnpm install
 ```
 
-### 2. 환경 변수 설정
+### 3. 환경 변수 설정
 
-`.env.example` 파일을 참고하여 `.env.local` 파일을 생성하고 데이터베이스 설정을 입력하세요.
+`.env.local` 파일을 생성하고 Supabase 설정을 입력하세요:
 
-```bash
-cp .env.example .env.local
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 3. 개발 서버 실행
+### 4. 개발 서버 실행
 
 ```bash
 pnpm dev
@@ -73,228 +111,205 @@ pnpm dev
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인하세요.
 
-### 4. 빌드
+### 5. 빌드 및 배포
 
 ```bash
+# 프로덕션 빌드
 pnpm build
-```
 
-### 5. 프로덕션 실행
-
-```bash
+# 빌드 결과 실행
 pnpm start
 ```
 
-## 📝 주요 기능
+## 📱 주요 기능
 
-### 1. 매거진 아티클 관리
+### 1. 홈페이지
 
-- 리치 에디터를 통한 콘텐츠 작성
-- 이미지/비디오 업로드 및 관리
-- 아티클 상태 관리 (초안/발행/비공개)
-- 예약 발행 기능
+- 최신 아티클 피드
+- 카테고리별 탐색
+- 인기 아티클 추천
+- 구조화된 데이터 (SEO)
 
-### 2. 카테고리별 분류
+### 2. 아티클 관리
 
-- 카페, 레스토랑, 팝업스토어, 문화공간, 쇼핑몰, 전시회
-- 지역별 필터링 (17개 시도)
-- 태그 시스템
+- 마크다운 기반 콘텐츠
+- 이미지 갤러리
+- 카테고리 및 지역 분류
+- 조회수 통계
 
-### 3. SNS 공유 기능
+### 3. 필터링 시스템
 
-- 페이스북, 인스타그램, 트위터, 카카오톡 공유
-- 오픈 그래프 메타데이터 최적화
+- 카테고리별 필터 (6개 주요 카테고리)
+- 지역별 필터 (17개 시도)
+- 정렬 옵션 (최신순, 인기순, 오래된순)
+- URL 기반 필터 상태 관리
+
+### 4. 검색 기능
+
+- 제목, 내용, 요약 검색
+- 카테고리 및 지역 조합 검색
+- 검색 결과 페이지네이션
+
+### 5. 소셜 공유
+
+- 페이스북, 트위터, 카카오톡 공유
+- 클립보드 복사
 - 공유 통계 추적
+- 오픈 그래프 메타데이터
 
-### 4. 이메일 구독 서비스
+### 6. 반응형 디자인
 
-- 이메일 주소 기반 구독 (회원가입 불필요)
-- 새 콘텐츠 알림
-- 카테고리별 맞춤 알림
-- 구독 해지 기능
-
-### 5. 사용자 경험 기능
-
-- 북마크 기능 (로컬 저장)
-- 읽기 기록 관리
-- 반응형 디자인
-- 다크/라이트 테마
+- 모바일 우선 설계
+- 터치 친화적 UI
+- 다양한 디바이스 지원
 
 ## 🔧 상태 관리
 
 ### Zustand 스토어
 
-- **filters**: 필터링 및 검색 상태
-- **ui**: 모달, 로딩, 테마 등 UI 상태
-- **subscription**: 구독, 북마크, 읽기 기록 관리
-
-### 사용 예시
+#### filters.ts
 
 ```typescript
-import { useFilters, useUI, useSubscription } from '@/hooks/useStores';
+// 필터링 상태 관리
+const useFilters = () => ({
+  selectedCategory: string | null,
+  selectedRegion: string | null,
+  sortBy: 'latest' | 'popular' | 'oldest',
+  setCategory: (category: string | null) => void,
+  setRegion: (region: string | null) => void,
+  setSortBy: (sort: string) => void,
+  clearFilters: () => void,
+});
+```
 
-// 필터링 상태 사용
+#### ui.ts
+
+```typescript
+// UI 상태 관리
+const useUI = () => ({
+  isMenuOpen: boolean,
+  toggleMenu: () => void,
+  showSuccess: (message: string) => void,
+  showError: (message: string) => void,
+});
+```
+
+## 📡 API 엔드포인트
+
+### 아티클 API
+
+- `GET /api/articles` - 아티클 목록 조회
+- `GET /api/articles?category=cafe` - 카테고리별 필터링
+- `GET /api/articles?region=seoul` - 지역별 필터링
+- `GET /api/articles?sort=popular` - 정렬 옵션
+
+### 카테고리 API
+
+- `GET /api/categories` - 카테고리 목록 조회
+
+### 검색 API
+
+- `GET /api/search?q=카페` - 텍스트 검색
+- `GET /api/search?q=카페&category=cafe` - 조합 검색
+
+### 공유 API
+
+- `POST /api/share` - 공유 통계 기록
+
+## 🎨 UI/UX 특징
+
+### 디자인 시스템
+
+- **미니멀한 디자인**: 깔끔하고 현대적인 인터페이스
+- **타이포그래피**: 가독성 중심의 폰트 시스템
+- **색상 팔레트**: 고급스러운 모노크롬 베이스
+- **그리드 시스템**: 반응형 카드 레이아웃
+
+### 접근성
+
+- ARIA 레이블 적용
+- 키보드 네비게이션 지원
+- 시멘틱 HTML 구조
+- 스크린 리더 호환성
+
+### 성능 최적화
+
+- React 19 업그레이드 완료
+- 이미지 최적화 (Next.js Image 컴포넌트)
+- 페이지네이션 성능 개선
+- 데이터베이스 쿼리 최적화
+
+### 버그 수정
+
+- 카테고리 필터링 동작 수정
+- URL 파라미터 동기화 개선
+- 반응형 레이아웃 안정화
+
+## 🛠️ 개발 가이드
+
+### 코딩 스타일
+
+- TypeScript Strict Mode 적용
+- ESLint + Prettier 설정
+- 함수형 컴포넌트 사용
+- 커스텀 훅 활용
+
+### 컴포넌트 구조
+
+```typescript
+// 컴포넌트 예시
+interface Props {
+  article: ArticleWithCategory;
+}
+
+export default function ArticleCard({ article }: Props) {
+  return (
+    <article className="group">
+      {/* 컴포넌트 내용 */}
+    </article>
+  );
+}
+```
+
+### 상태 관리 패턴
+
+```typescript
+// Zustand 스토어 사용
 const { selectedCategory, setCategory } = useFilters();
-
-// UI 상태 사용
-const { isMenuOpen, toggleMenu } = useUI();
-
-// 구독 상태 사용
-const { isSubscribed, subscribe } = useSubscription();
+const { showSuccess } = useUI();
 ```
 
-## 🎨 디자인 시스템
+## 📊 성능 및 최적화
 
-### 색상 팔레트
+### 렌더링 최적화
 
-- **Primary**: 브랜드 메인 컬러
-- **Secondary**: 보조 컬러
-- **Accent**: 강조 컬러
-- **Neutral**: 텍스트 및 배경 컬러
+- 서버 사이드 렌더링 (SSR)
+- 정적 사이트 생성 (SSG)
+- 동적 임포트 사용
+- 이미지 지연 로딩
 
-### 컴포넌트
+### SEO 최적화
 
-- **Button**: 다양한 크기와 스타일의 버튼
-- **Card**: 아티클 카드 컴포넌트
-- **Modal**: 모달 컴포넌트
-- **Toast**: 알림 컴포넌트
-
-## 📱 반응형 디자인
-
-### 브레이크포인트
-
-- **Mobile**: < 768px
-- **Tablet**: 768px - 1024px
-- **Desktop**: > 1024px
-
-### 최적화
-
-- 모바일 우선 설계
-- 터치 친화적 인터페이스
-- 빠른 로딩 속도
-- 접근성 준수
-
-## 🚀 배포
-
-### Vercel 배포
-
-```bash
-# Vercel CLI 설치
-npm i -g vercel
-
-# 배포
-vercel --prod
-```
-
-### 환경 변수 설정
-
-Vercel 대시보드에서 다음 환경 변수를 설정하세요:
-
-- `DATABASE_URL`: 데이터베이스 연결 URL
-- `NEXTAUTH_SECRET`: 세션 암호화 키
-- `NEXTAUTH_URL`: 배포 URL
-
-## 🧪 테스트
-
-### 단위 테스트
-
-```bash
-pnpm test
-```
-
-### E2E 테스트
-
-```bash
-pnpm test:e2e
-```
-
-### 테스트 커버리지
-
-```bash
-pnpm test:coverage
-```
-
-## 📊 성능 최적화
-
-### 이미지 최적화
-
-- Next.js Image 컴포넌트 사용
-- WebP 형식 지원
-- 지연 로딩 적용
-
-### 코드 분할
-
-- 동적 import 사용
-- 페이지별 코드 분할
-- 컴포넌트 지연 로딩
-
-### 캐싱
-
-- 정적 자산 캐싱
-- API 응답 캐싱
-- 브라우저 캐싱 활용
-
-## 🔒 보안
-
-### 데이터 보호
-
-- 입력 검증
-- SQL 인젝션 방지
-- XSS 방지
-
-### API 보안
-
-- CORS 설정
-- 레이트 리미팅
-- 환경 변수 보호
+- 메타데이터 관리
+- 구조화된 데이터 (JSON-LD)
+- 사이트맵 자동 생성
+- 오픈 그래프 최적화
 
 ## 📈 분석 및 모니터링
 
-### 성능 분석
+### 기본 통계
 
-- Vercel Analytics
-- Google Analytics
-- Core Web Vitals
+- 아티클 조회수 추적
+- 카테고리별 인기도
+- 공유 플랫폼 분석
+- 사용자 행동 패턴
 
-### 에러 추적
+### 성능 모니터링
 
-- Sentry 통합
-- 로그 모니터링
-- 알림 설정
+- Core Web Vitals 측정
+- 로딩 시간 최적화
+- 에러 추적 및 로깅
 
-## 🤝 기여 가이드
+---
 
-### 개발 환경 설정
-
-1. 저장소 클론
-2. 의존성 설치
-3. 환경 변수 설정
-4. 개발 서버 실행
-
-### 코드 스타일
-
-- ESLint 규칙 준수
-- Prettier 포맷팅
-- TypeScript strict mode
-
-### 커밋 컨벤션
-
-```
-feat: 새로운 기능 추가
-fix: 버그 수정
-docs: 문서 수정
-style: 코드 포맷팅
-refactor: 코드 리팩토링
-test: 테스트 추가
-chore: 빌드 및 설정 변경
-```
-
-## 📄 라이선스
-
-MIT License
-
-## 📞 문의
-
-- 이메일: contact@magplus.com
-- 웹사이트: https://magplus.com
-- GitHub: https://github.com/magplus/web-magazine
+**MAG+** - Discover Seoul's Hidden Gems 🏙️✨

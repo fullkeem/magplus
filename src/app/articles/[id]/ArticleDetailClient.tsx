@@ -1,77 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  HeartIcon,
-  ShareIcon,
-  BookmarkIcon,
-  EyeIcon,
-} from "@heroicons/react/24/outline";
-import {
-  HeartIcon as HeartIconSolid,
-  BookmarkIcon as BookmarkIconSolid,
-} from "@heroicons/react/24/solid";
+import { EyeIcon } from "@heroicons/react/24/outline";
 import Breadcrumb from "@/components/common/Breadcrumb";
-import { incrementViews, incrementLikes } from "@/lib/supabase/articles";
-import { recordShare } from "@/lib/supabase/shares";
+import ShareButton from "@/components/common/ShareButton";
+import { incrementViews } from "@/lib/supabase/articles";
 import type { ArticleWithCategory } from "@/lib/database.types";
 import Link from "next/link";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   article: ArticleWithCategory;
 }
 
 export default function ArticleDetailClient({ article }: Props) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(article.likes || 0);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     // 조회수 증가
     incrementViews(article.id);
+    // 클라이언트 사이드 렌더링 확인
+    setIsClient(true);
   }, [article.id]);
-
-  const handleShare = async (platform: string = "clipboard") => {
-    try {
-      // 공유 통계 기록
-      await recordShare({
-        article_id: article.id,
-        platform: platform as any,
-      });
-
-      if (navigator.share && platform === "native") {
-        await navigator.share({
-          title: article.title,
-          text: article.excerpt || article.title,
-          url: window.location.href,
-        });
-      } else {
-        // 폴백: 클립보드에 복사
-        await navigator.clipboard.writeText(window.location.href);
-        alert("링크가 클립보드에 복사되었습니다!");
-      }
-    } catch (error) {
-      console.log("Share cancelled or failed:", error);
-    }
-  };
-
-  const handleLike = async () => {
-    try {
-      if (!isLiked) {
-        await incrementLikes(article.id);
-        setLikeCount((prev) => prev + 1);
-        setIsLiked(true);
-      }
-    } catch (error) {
-      console.error("Error liking article:", error);
-    }
-  };
-
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // 실제로는 로컬 스토리지나 사용자 데이터에 저장
-  };
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -113,10 +65,6 @@ export default function ArticleDetailClient({ article }: Props) {
               <EyeIcon className="h-4 w-4" />
               <span>{(article.views || 0) + 1} views</span>
             </div>
-            <div className="flex items-center gap-1">
-              <HeartIcon className="h-4 w-4" />
-              <span>{likeCount} likes</span>
-            </div>
             {article.published_at && (
               <time dateTime={article.published_at}>
                 {new Date(article.published_at).toLocaleDateString("ko-KR")}
@@ -124,50 +72,16 @@ export default function ArticleDetailClient({ article }: Props) {
             )}
           </div>
 
-          {/* 액션 버튼들 */}
+          {/* 공유 버튼 */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleLike}
-              className={`p-2 rounded-full transition-colors ${
-                isLiked
-                  ? "text-red-500 hover:text-red-600"
-                  : "text-gray-400 hover:text-red-500"
-              }`}
-              title="Like"
-              aria-label={`좋아요 ${likeCount}개`}
-            >
-              {isLiked ? (
-                <HeartIconSolid className="h-5 w-5" />
-              ) : (
-                <HeartIcon className="h-5 w-5" />
-              )}
-            </button>
-
-            <button
-              onClick={handleBookmark}
-              className={`p-2 rounded-full transition-colors ${
-                isBookmarked
-                  ? "text-blue-500 hover:text-blue-600"
-                  : "text-gray-400 hover:text-blue-500"
-              }`}
-              title="Bookmark"
-              aria-label="북마크"
-            >
-              {isBookmarked ? (
-                <BookmarkIconSolid className="h-5 w-5" />
-              ) : (
-                <BookmarkIcon className="h-5 w-5" />
-              )}
-            </button>
-
-            <button
-              onClick={() => handleShare("clipboard")}
-              className="p-2 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
-              title="Share"
-              aria-label="공유"
-            >
-              <ShareIcon className="h-5 w-5" />
-            </button>
+            <ShareButton
+              articleId={article.id}
+              title={article.title}
+              excerpt={article.excerpt || undefined}
+              variant="ghost"
+              size="sm"
+              showLabel={false}
+            />
           </div>
         </div>
       </header>
@@ -190,12 +104,88 @@ export default function ArticleDetailClient({ article }: Props) {
 
       {/* 아티클 내용 */}
       <div className="prose prose-lg max-w-none">
-        <div
-          className="text-gray-800 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html: article.content.replace(/\n/g, "<br/>"),
-          }}
-        />
+        <div className="text-gray-800 leading-relaxed">
+          {isClient ? (
+            <ReactMarkdown
+              key={article.id}
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => (
+                  <h2 className="text-2xl font-semibold text-black mt-8 mb-4">
+                    {children}
+                  </h2>
+                ),
+                h2: ({ children }) => (
+                  <h3 className="text-xl font-semibold text-black mt-6 mb-3">
+                    {children}
+                  </h3>
+                ),
+                h3: ({ children }) => (
+                  <h4 className="text-lg font-semibold text-black mt-5 mb-2">
+                    {children}
+                  </h4>
+                ),
+                p: ({ children }) => (
+                  <p className="text-gray-800 leading-relaxed mb-4">
+                    {children}
+                  </p>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside mb-4 space-y-2">
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside mb-4 space-y-2">
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li className="text-gray-800 leading-relaxed">{children}</li>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-black">
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em className="italic text-gray-700">{children}</em>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">
+                    {children}
+                  </blockquote>
+                ),
+                code: ({ children }) => (
+                  <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">
+                    {children}
+                  </code>
+                ),
+                pre: ({ children }) => (
+                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4">
+                    {children}
+                  </pre>
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {article.content}
+            </ReactMarkdown>
+          ) : (
+            <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+              {article.content}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 추가 이미지들 */}
@@ -224,31 +214,14 @@ export default function ArticleDetailClient({ article }: Props) {
       <div className="mt-16 pt-8 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                isLiked
-                  ? "bg-red-50 text-red-600"
-                  : "bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600"
-              }`}
-              aria-label={`좋아요 ${likeCount}개`}
-            >
-              {isLiked ? (
-                <HeartIconSolid className="h-5 w-5" />
-              ) : (
-                <HeartIcon className="h-5 w-5" />
-              )}
-              <span>{likeCount}</span>
-            </button>
-
-            <button
-              onClick={() => handleShare("clipboard")}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
-              aria-label="공유"
-            >
-              <ShareIcon className="h-5 w-5" />
-              <span>Share</span>
-            </button>
+            <ShareButton
+              articleId={article.id}
+              title={article.title}
+              excerpt={article.excerpt || undefined}
+              variant="secondary"
+              size="md"
+              showLabel={true}
+            />
           </div>
 
           <Link

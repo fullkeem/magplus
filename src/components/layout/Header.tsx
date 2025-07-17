@@ -24,11 +24,6 @@ export default function Header() {
     }
   };
 
-  const handleSubscribe = () => {
-    showSuccess("구독 페이지로 이동합니다");
-    window.location.href = "/subscription";
-  };
-
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -178,20 +173,11 @@ export default function Header() {
                     placeholder="검색..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white transition-all duration-200"
+                    className="block w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:border-black focus:bg-white transition-all duration-200"
                     aria-label="검색어 입력"
                   />
                 </div>
               </form>
-
-              {/* 구독 버튼 */}
-              <button
-                onClick={handleSubscribe}
-                className="flex items-center justify-center px-6 py-2 border-2 border-black text-sm font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-300 rounded-lg"
-                aria-label="뉴스레터 구독하기"
-              >
-                SUBSCRIBE
-              </button>
             </div>
 
             {/* 모바일 햄버거 메뉴 버튼 */}
@@ -277,7 +263,7 @@ export default function Header() {
                     placeholder="검색어를 입력하세요..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg bg-gray-50 leading-5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black focus:bg-white text-base font-light transition-all duration-200"
+                    className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg bg-gray-50 leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-black focus:bg-white text-base font-light transition-all duration-200"
                     aria-label="검색어 입력"
                   />
                 </div>
@@ -332,18 +318,6 @@ export default function Header() {
             </div>
 
             {/* 구독 버튼 */}
-            <div className="pt-6">
-              <button
-                onClick={() => {
-                  handleSubscribe();
-                  closeMobileMenu();
-                }}
-                className="w-full flex items-center justify-center px-8 py-4 border-2 border-black text-lg font-light tracking-wide text-black bg-white hover:bg-black hover:text-white transition-all duration-300 rounded-lg"
-                aria-label="뉴스레터 구독하기"
-              >
-                SUBSCRIBE
-              </button>
-            </div>
 
             {/* 추가 여백 */}
             <div className="h-20"></div>
